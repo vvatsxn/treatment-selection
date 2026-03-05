@@ -28,7 +28,7 @@ const QuestionnaireScreen: React.FC = () => {
   const planGoalRef = useRef<View>(null);
   const initial = getInitialPage();
   const [currentStep, setCurrentStep] = useState<number>(initial.step);
-  const [consentAccepted, setConsentAccepted] = useState<boolean>(initial.consent);
+  const [consentAccepted, setConsentAccepted] = useState<boolean>(true);
   const [treatmentSelected, setTreatmentSelected] = useState<boolean>(initial.treatmentSelected);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [selectedMedType, setSelectedMedType] = useState<string | null>(null);
