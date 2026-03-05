@@ -138,6 +138,13 @@ const QuestionnaireScreen: React.FC = () => {
   };
 
   const handleSelectMedType = (type: string) => {
+    if (type === selectedMedType) {
+      setSelectedMedType(null);
+      setSelectedMedBrand(null);
+      setSelectedSupply(null);
+      setSelectedPlanGoal(null);
+      return;
+    }
     setSelectedMedType(type);
     setSelectedMedBrand(null);
     setSelectedSupply(null);
@@ -146,6 +153,7 @@ const QuestionnaireScreen: React.FC = () => {
   };
 
   const handleSelectMedBrand = (brand: string) => {
+    if (brand === selectedMedBrand) return;
     setSelectedMedBrand(brand);
     setSelectedSupply(null);
     setSelectedPlanGoal(null);
@@ -153,6 +161,7 @@ const QuestionnaireScreen: React.FC = () => {
   };
 
   const handleSelectSupply = (supply: string) => {
+    if (supply === selectedSupply) return;
     setSelectedSupply(supply);
     setSelectedPlanGoal(null);
     setTimeout(() => scrollToRef(planGoalRef), 50);
@@ -527,6 +536,8 @@ const styles = StyleSheet.create({
   },
   medTypeCard: {
     flex: 1,
+    borderRadius: 8,
+    overflow: 'hidden' as any,
   },
   medTypeCardSelected: {
     shadowColor: '#000000',
@@ -571,6 +582,10 @@ const styles = StyleSheet.create({
   } as any,
   medTypeCardTopSelected: {
     borderColor: pippTheme.colors.border.primary,
+    borderTopWidth: 2,
+    borderRightWidth: 2,
+    borderLeftWidth: 2,
+    padding: 11,
   },
   injectableMounjaroPen: {
     position: 'absolute' as any,
@@ -697,6 +712,8 @@ const styles = StyleSheet.create({
   },
   medTypeCardBottomSelected: {
     borderColor: pippTheme.colors.border.primary,
+    borderWidth: 2,
+    padding: 7,
   },
   medTypeCardTitle: {
     fontFamily: pippTheme.fontFamily.body,
@@ -739,6 +756,11 @@ const styles = StyleSheet.create({
     padding: 15,
     paddingHorizontal: 11,
     backgroundImage: 'linear-gradient(291deg, #FDFAF7 0%, #DEF4F7 100%)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   } as any,
   supplyCardLabel: {
     position: 'absolute' as any,
@@ -1124,6 +1146,8 @@ const styles = StyleSheet.create({
   planGoalCard: {
     marginTop: 12,
     alignSelf: 'stretch' as any,
+    borderRadius: 8,
+    overflow: 'hidden' as any,
   },
   planGoalTop: {
     padding: 16,
@@ -1224,10 +1248,18 @@ const styles = StyleSheet.create({
   },
   planGoalTopSelected: {
     borderColor: pippTheme.colors.border.primary,
+    borderWidth: 2,
+    padding: 15,
     backgroundImage: 'linear-gradient(180deg, #E1FFE5 0%, rgba(255, 255, 255, 0.00) 100%), linear-gradient(0deg, #FFF, #FFF)',
   } as any,
   planGoalBottomSelected: {
     borderColor: pippTheme.colors.border.primary,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+    borderLeftWidth: 2,
+    padding: 7,
+    paddingBottom: 11,
+    paddingHorizontal: 11,
   },
 });
 
