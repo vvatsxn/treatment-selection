@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Linking, Image, TouchableOpacity } from 'react-native';
 import { pippTheme } from '../theme/pipp';
 import Header from '../components/Header';
@@ -22,6 +22,7 @@ const getInitialPage = (): { step: number; consent: boolean; treatmentSelected: 
 };
 
 const QuestionnaireScreen: React.FC = () => {
+  const scrollViewRef = useRef<ScrollView>(null);
   const initial = getInitialPage();
   const [currentStep, setCurrentStep] = useState<number>(initial.step);
   const [consentAccepted, setConsentAccepted] = useState<boolean>(initial.consent);
@@ -44,6 +45,12 @@ const QuestionnaireScreen: React.FC = () => {
     } else {
       window.location.hash = `step-${currentStep}`;
     }
+  }, [currentStep, consentAccepted, treatmentSelected]);
+
+  // Scroll to top on page change
+  useEffect(() => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    window.scrollTo(0, 0);
   }, [currentStep, consentAccepted, treatmentSelected]);
 
   const questions = [
@@ -129,6 +136,7 @@ const QuestionnaireScreen: React.FC = () => {
         />
 
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
         >
