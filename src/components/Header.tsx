@@ -11,7 +11,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ title, onBackPress, showBackButton = true, progress }) => {
   return (
-    <View>
+    <View style={styles.wrapper}>
       <View style={styles.container}>
         {showBackButton && onBackPress && (
           <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
@@ -39,6 +39,12 @@ const Header: React.FC<HeaderProps> = ({ title, onBackPress, showBackButton = tr
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    position: 'sticky' as any,
+    top: 0,
+    zIndex: 10,
+    backgroundColor: pippTheme.colors.background.primary,
+  },
   container: {
     height: 60,
     backgroundColor: pippTheme.colors.background.primary,
