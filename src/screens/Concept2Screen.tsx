@@ -28,7 +28,7 @@ const QuestionnaireScreen: React.FC = () => {
   const planGoalRef = useRef<View>(null);
   const initial = getInitialPage();
   const [currentStep, setCurrentStep] = useState<number>(initial.step);
-  const [consentAccepted, setConsentAccepted] = useState<boolean>(true);
+  const [consentAccepted, setConsentAccepted] = useState<boolean>(false);
   const [treatmentSelected, setTreatmentSelected] = useState<boolean>(initial.treatmentSelected);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [selectedMedType, setSelectedMedType] = useState<string | null>(null);
@@ -212,6 +212,72 @@ const QuestionnaireScreen: React.FC = () => {
           <Text style={[styles.question, currentStep === 1 && consentAccepted && styles.questionBold]}>
             {currentStep === 1 && consentAccepted ? 'Choose my treatment' : currentQuestion.question}
           </Text>
+
+          {currentStep === 1 && !consentAccepted && (
+            <>
+            <View style={styles.consentContainer}>
+              <Text style={styles.consentIntro}>I understand and agree to the following:</Text>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I consent for Phlo to contact my GP to verify the information provided and to <Text style={styles.semiBold}>inform them of any treatment received.</Text></Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I am aged between 18-85.</Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I consent to Phlo accessing my <Text style={styles.linkText} onPress={() => Linking.openURL('https://digital.nhs.uk/services/summary-care-records-scr/summary-care-records-scr-information-for-patients')}>Summary Care Record</Text> to verify my medical history and medication eligibility. If I don't have a Summary Care Record I will be required to contact my GP and provide a copy of my medical record.</Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I confirm I will read the patient information leaflet provided with the medicine which includes more information including side effects. I understand increasing the dose of my medicine may result in side effects like vomiting, diarrhoea or constipation. Rarely, hospital treatment is needed for side effects. I agree to report all side effects to Phlo Clinical Team.</Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I understand that there is a risk of allergic reaction or side effects with weight loss medication and that I should seek medical attention and discontinue the treatment if I experience severe symptoms.</Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I understand I will stop using the treatment if I experience <Text style={styles.semiBold}>prolonged stomach pain or a sustained increase in heart rate.</Text></Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I confirm I will follow all storage instructions that come with the medicine.</Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I confirm not to combine doses (taking an extra strength or mixing different strengths to reach a higher weekly dose) and will only use the pen prescribed by Phlo. Combining doses can cause dangerous dosing errors which can increase risk of side effects and is not licensed or recommended.</Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I understand that if I am switching between weight loss injectable medications, I must stop my old medication and wait <Text style={styles.semiBold}>at least 10 days</Text> before starting the new medication. This 'washout' period is required to reduce the risk of side effects or interactions between treatments.</Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>I confirm I understand my order is subject to clinical approval by the Phlo Clinical Team, and I have provided honest and accurate information throughout.</Text>
+              </View>
+              <View style={styles.bulletRow}>
+                <Text style={styles.bulletPoint}>{'\u2022'}</Text>
+                <Text style={styles.consentBody}>If I am transferring to Phlo, I confirm I previously met criteria for initiation of treatment and I wish to continue weight loss treatment / maintenance treatment.</Text>
+              </View>
+
+              <View style={styles.consentDivider} />
+
+              <Text style={styles.consentFooter}>
+                By selecting '<Text style={styles.consentFooterBold}>Agree and continue</Text>' you acknowledge that you have read, understood and agree to all of the above.
+              </Text>
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <PIPPButton
+                title="Agree and continue"
+                onPress={() => setConsentAccepted(true)}
+                iconRight={require('../theme/icons/arrow-forward.svg')}
+              />
+            </View>
+            </>
+          )}
 
           {currentStep === 1 && consentAccepted && (
             <>

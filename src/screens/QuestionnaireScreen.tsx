@@ -28,7 +28,10 @@ const QuestionnaireScreen: React.FC = () => {
   const [consentAccepted, setConsentAccepted] = useState<boolean>(initial.consent);
   const [treatmentSelected, setTreatmentSelected] = useState<boolean>(initial.treatmentSelected);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [selectedTreatment, setSelectedTreatment] = useState<string | null>(null);
   const [selectedSupply, setSelectedSupply] = useState<string | null>('3-month');
+  const [supplySelected, setSupplySelected] = useState<boolean>(false);
+  const [selectedPlanGoal, setSelectedPlanGoal] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
   // Store answers for each step
@@ -40,18 +43,20 @@ const QuestionnaireScreen: React.FC = () => {
       window.location.hash = '';
     } else if (currentStep === 1 && consentAccepted && !treatmentSelected) {
       window.location.hash = 'treatment';
-    } else if (currentStep === 1 && consentAccepted && treatmentSelected) {
+    } else if (currentStep === 1 && consentAccepted && treatmentSelected && !supplySelected) {
       window.location.hash = 'supply';
+    } else if (currentStep === 1 && consentAccepted && treatmentSelected && supplySelected) {
+      window.location.hash = 'plan';
     } else {
       window.location.hash = `step-${currentStep}`;
     }
-  }, [currentStep, consentAccepted, treatmentSelected]);
+  }, [currentStep, consentAccepted, treatmentSelected, supplySelected]);
 
   // Scroll to top on page change
   useEffect(() => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     window.scrollTo(0, 0);
-  }, [currentStep, consentAccepted, treatmentSelected]);
+  }, [currentStep, consentAccepted, treatmentSelected, supplySelected]);
 
   const questions = [
     {
@@ -74,6 +79,48 @@ const QuestionnaireScreen: React.FC = () => {
     },
   ];
 
+  const planGoalConfigs: Record<string, { unit: string; doseColors: Record<string, string>; plans: { id: string; label: string; price: string; total: string; doses: Record<number, string[]> }[] }> = {
+    'wegovy-flextouch': {
+      unit: '/ pen',
+      doseColors: pippTheme.colors.doses.wegovy,
+      plans: [
+        { id: 'maintenance', label: 'Maintenance plan', price: '£92.33', total: '£597 total', doses: { 1: ['1mg'], 2: ['1mg', '1mg'], 3: ['1mg', '1mg', '1mg'] } },
+        { id: 'increasing', label: 'Increasing plan', price: '£92.33', total: '£597 total', doses: { 1: ['1.7mg'], 2: ['1mg', '1.7mg'], 3: ['1mg', '1.7mg', '2.4mg'] } },
+        { id: 'decreasing', label: 'Decreasing plan', price: '£92.33', total: '£597 total', doses: { 1: ['0.5mg'], 2: ['1mg', '0.5mg'], 3: ['1mg', '0.5mg', '0.25mg'] } },
+      ],
+    },
+    'mounjaro-kwikpen': {
+      unit: '/ pen',
+      doseColors: pippTheme.colors.doses.mounjaro,
+      plans: [
+        { id: 'maintenance', label: 'Maintenance plan', price: '£92.33', total: '£597 total', doses: { 1: ['5mg'], 2: ['5mg', '5mg'], 3: ['5mg', '5mg', '5mg'] } },
+        { id: 'increasing', label: 'Increasing plan', price: '£92.33', total: '£597 total', doses: { 1: ['7.5mg'], 2: ['5mg', '7.5mg'], 3: ['5mg', '7.5mg', '10mg'] } },
+        { id: 'decreasing', label: 'Decreasing plan', price: '£92.33', total: '£597 total', doses: { 1: ['2.5mg'], 2: ['5mg', '2.5mg'], 3: ['5mg', '2.5mg', '2.5mg'] } },
+      ],
+    },
+    'wegovy-pill': {
+      unit: '/ month',
+      doseColors: pippTheme.colors.doses.wegovyPill,
+      plans: [
+        { id: 'maintenance', label: 'Maintenance plan', price: '£92.33', total: '£597 total', doses: { 1: ['9mg'], 2: ['9mg', '9mg'], 3: ['9mg', '9mg', '9mg'] } },
+        { id: 'increasing', label: 'Increasing plan', price: '£92.33', total: '£597 total', doses: { 1: ['25mg'], 2: ['9mg', '25mg'], 3: ['9mg', '25mg', '25mg'] } },
+        { id: 'decreasing', label: 'Decreasing plan', price: '£92.33', total: '£597 total', doses: { 1: ['4mg'], 2: ['9mg', '4mg'], 3: ['9mg', '4mg', '1.5mg'] } },
+      ],
+    },
+    'orfoglipron': {
+      unit: '/ month',
+      doseColors: pippTheme.colors.doses.orfoglipron,
+      plans: [
+        { id: 'maintenance', label: 'Maintenance plan', price: '£92.33', total: '£597 total', doses: { 1: ['12mg'], 2: ['12mg', '12mg'], 3: ['12mg', '12mg', '12mg'] } },
+        { id: 'increasing', label: 'Increasing plan', price: '£92.33', total: '£597 total', doses: { 1: ['24mg'], 2: ['12mg', '24mg'], 3: ['12mg', '24mg', '36mg'] } },
+        { id: 'decreasing', label: 'Decreasing plan', price: '£92.33', total: '£597 total', doses: { 1: ['6mg'], 2: ['12mg', '6mg'], 3: ['12mg', '6mg', '3mg'] } },
+      ],
+    },
+  };
+
+  const activePlanConfig = selectedTreatment ? planGoalConfigs[selectedTreatment] : null;
+  const supplyMonths = selectedSupply === '3-month' ? 3 : selectedSupply === '2-month' ? 2 : 1;
+
   const currentQuestion = questions[currentStep - 1];
 
   const handleContinue = () => {
@@ -85,7 +132,14 @@ const QuestionnaireScreen: React.FC = () => {
 
     // Handle treatment selection — go to supply length page
     if (currentStep === 1 && consentAccepted && !treatmentSelected) {
+      setSelectedTreatment('wegovy-flextouch');
       setTreatmentSelected(true);
+      return;
+    }
+
+    // Handle supply selection — go to choose plan page
+    if (currentStep === 1 && consentAccepted && treatmentSelected && !supplySelected) {
+      setSupplySelected(true);
       return;
     }
 
@@ -102,8 +156,17 @@ const QuestionnaireScreen: React.FC = () => {
   };
 
   const handleBack = () => {
+    if (currentStep === 1 && consentAccepted && treatmentSelected && supplySelected) {
+      setSupplySelected(false);
+      setSelectedPlanGoal(null);
+      return;
+    }
     if (currentStep === 1 && consentAccepted && treatmentSelected) {
       setTreatmentSelected(false);
+      setSelectedTreatment(null);
+      setSelectedSupply('3-month');
+      setSupplySelected(false);
+      setSelectedPlanGoal(null);
       setSelectedAnswer(null);
       return;
     }
@@ -141,10 +204,10 @@ const QuestionnaireScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
         >
           <Text style={[styles.question, currentStep === 1 && consentAccepted && styles.questionBold]}>
-            {currentStep === 1 && consentAccepted && treatmentSelected ? 'Choose supply length' : currentStep === 1 && consentAccepted ? 'Choose my treatment' : currentQuestion.question}
+            {currentStep === 1 && consentAccepted && treatmentSelected && supplySelected ? 'Choose plan' : currentStep === 1 && consentAccepted && treatmentSelected ? 'Choose supply length' : currentStep === 1 && consentAccepted ? 'Choose my treatment' : currentQuestion.question}
           </Text>
 
-          {currentStep === 1 && consentAccepted && treatmentSelected && (
+          {currentStep === 1 && consentAccepted && treatmentSelected && !supplySelected && (
             <>
             <Text style={styles.treatmentSubtitle}>Please select a treatment to continue. Our clinical team will review your request to make sure its the correct fit for you.</Text>
 
@@ -202,6 +265,43 @@ const QuestionnaireScreen: React.FC = () => {
                   <Text style={styles.saveBadgeText}>Save £53</Text>
                 </View>
               </TouchableOpacity>
+            </View>
+            </>
+          )}
+
+          {currentStep === 1 && consentAccepted && treatmentSelected && supplySelected && (
+            <>
+            <Text style={styles.treatmentSubtitle}>Select a dosing plan. Our clinical team will review your selection.</Text>
+
+            {activePlanConfig?.plans.map((plan) => (
+            <TouchableOpacity key={plan.id} style={[styles.planGoalCard, selectedPlanGoal === plan.id && styles.planGoalCardSelected]} onPress={() => setSelectedPlanGoal(plan.id)} activeOpacity={0.7}>
+              <View style={[styles.planGoalTop, selectedPlanGoal === plan.id && styles.planGoalTopSelected]}>
+                <Text style={styles.planGoalLabel}>{plan.label}</Text>
+                <View style={styles.planGoalPriceRow}>
+                  <Text style={styles.planGoalPrice}>{plan.price}</Text>
+                  <Text style={styles.planGoalPriceUnit}>{activePlanConfig.unit}</Text>
+                </View>
+                <Text style={styles.planGoalTotal}>{plan.total}</Text>
+              </View>
+              <View style={[styles.planGoalBottom, selectedPlanGoal === plan.id && styles.planGoalBottomSelected]}>
+                {(plan.doses[supplyMonths] || []).map((dose: string, i: number) => (
+                  <View key={i} style={styles.planGoalMonth}>
+                    <Text style={styles.planGoalMonthLabel}>Month {i + 1}</Text>
+                    <View style={[styles.planGoalDoseTag, { backgroundColor: activePlanConfig.doseColors[dose] || '#402A5B' }]}>
+                      <Text style={styles.planGoalDoseTagText}>{dose}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </TouchableOpacity>
+            ))}
+
+            <View style={styles.buttonContainer}>
+              <PIPPButton
+                title="Continue"
+                onPress={() => {}}
+                disabled={!selectedPlanGoal}
+              />
             </View>
             </>
           )}
@@ -317,6 +417,7 @@ const QuestionnaireScreen: React.FC = () => {
             </View>
           )}
 
+          {!(currentStep === 1 && consentAccepted && treatmentSelected && supplySelected) && (
           <View style={styles.buttonContainer}>
             <PIPPButton
               title={currentStep === 1 && !consentAccepted ? "Agree and continue" : currentStep === 1 && consentAccepted && !treatmentSelected ? "Continue with Wegovy" : "Continue"}
@@ -325,13 +426,14 @@ const QuestionnaireScreen: React.FC = () => {
               iconRight={currentStep === 1 && !consentAccepted ? require('../theme/icons/arrow-forward.svg') : undefined}
             />
           </View>
+          )}
 
           {currentStep === 1 && consentAccepted && !treatmentSelected && (
             <>
             <Text style={styles.bundleDisclaimer}>Future bundle prices vary by dose</Text>
 
             <View style={styles.altCardsContainer}>
-              <TouchableOpacity style={styles.mountjaroCard} onPress={() => setTreatmentSelected(true)} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.mountjaroCard} onPress={() => { setSelectedTreatment('mounjaro-kwikpen'); setTreatmentSelected(true); }} activeOpacity={0.7}>
                 <View style={styles.altCardImageArea}>
                   <Image
                     source={require('../images/mounjaro-pen.png')}
@@ -353,7 +455,7 @@ const QuestionnaireScreen: React.FC = () => {
                   />
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.wegovyPillCard} onPress={() => setTreatmentSelected(true)} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.wegovyPillCard} onPress={() => { setSelectedTreatment('wegovy-pill'); setTreatmentSelected(true); }} activeOpacity={0.7}>
                 <View style={styles.altCardImageArea}>
                   <Image
                     source={require('../images/wegovy-pill.png')}
@@ -376,7 +478,7 @@ const QuestionnaireScreen: React.FC = () => {
                   />
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.orfoglipronCard} onPress={() => setTreatmentSelected(true)} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.orfoglipronCard} onPress={() => { setSelectedTreatment('orfoglipron'); setTreatmentSelected(true); }} activeOpacity={0.7}>
                 <View style={styles.altCardImageArea}>
                   <Image
                     source={require('../images/orfoglipron-tablet.png')}
@@ -915,6 +1017,124 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
     backgroundColor: pippTheme.colors.background.primary,
+  },
+  planGoalCard: {
+    marginTop: 12,
+    alignSelf: 'stretch' as any,
+    borderRadius: 8,
+    overflow: 'hidden' as any,
+  },
+  planGoalCardSelected: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  planGoalTop: {
+    padding: 16,
+    flexDirection: 'column' as any,
+    alignItems: 'flex-start',
+    gap: 0,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderWidth: 1,
+    borderColor: pippTheme.colors.border.default,
+    backgroundColor: '#FFFFFF',
+  },
+  planGoalTopSelected: {
+    borderColor: pippTheme.colors.border.primary,
+    borderWidth: 2,
+    padding: 15,
+    backgroundImage: 'linear-gradient(180deg, #E1FFE5 0%, rgba(255, 255, 255, 0.00) 100%), linear-gradient(0deg, #FFF, #FFF)',
+  } as any,
+  planGoalLabel: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: pippTheme.fontSize.body2,
+    fontWeight: pippTheme.fontWeight.regular.toString() as any,
+    lineHeight: pippTheme.lineHeight[22],
+    color: pippTheme.colors.text.secondary,
+    textAlign: 'center' as any,
+  },
+  planGoalPriceRow: {
+    flexDirection: 'row' as any,
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  planGoalPrice: {
+    fontFamily: pippTheme.fontFamily.heading,
+    fontSize: pippTheme.fontSize.header3,
+    fontWeight: pippTheme.fontWeight.semiBold.toString() as any,
+    lineHeight: pippTheme.lineHeight[32],
+    color: pippTheme.colors.text.primary,
+    textAlign: 'center' as any,
+  },
+  planGoalPriceUnit: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: pippTheme.fontSize.body2,
+    fontWeight: pippTheme.fontWeight.regular.toString() as any,
+    lineHeight: pippTheme.lineHeight[22],
+    color: pippTheme.colors.text.subtle,
+    textAlign: 'center' as any,
+  },
+  planGoalTotal: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: pippTheme.fontSize.small,
+    fontWeight: pippTheme.fontWeight.regular.toString() as any,
+    lineHeight: pippTheme.lineHeight[12],
+    color: pippTheme.colors.text.secondary,
+    textAlign: 'center' as any,
+  },
+  planGoalBottom: {
+    flexDirection: 'row' as any,
+    padding: 8,
+    paddingBottom: 12,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    gap: 8,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderColor: pippTheme.colors.border.default,
+    backgroundColor: '#F9F9F9',
+  },
+  planGoalBottomSelected: {
+    borderColor: pippTheme.colors.border.primary,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+    borderLeftWidth: 2,
+    padding: 7,
+    paddingBottom: 11,
+    paddingHorizontal: 11,
+  },
+  planGoalMonth: {
+    flex: 1,
+    flexDirection: 'column' as any,
+    alignItems: 'center',
+    gap: 6,
+  },
+  planGoalMonthLabel: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: pippTheme.fontSize.small,
+    fontWeight: pippTheme.fontWeight.regular.toString() as any,
+    lineHeight: pippTheme.lineHeight[12],
+    color: pippTheme.colors.text.subtle,
+  },
+  planGoalDoseTag: {
+    borderRadius: 4,
+    backgroundColor: '#402A5B',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: 'stretch' as any,
+    alignItems: 'center' as any,
+  },
+  planGoalDoseTagText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 10,
+    fontWeight: '500' as any,
+    color: '#FFFFFF',
   },
 });
 
