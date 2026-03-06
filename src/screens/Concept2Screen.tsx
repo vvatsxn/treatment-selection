@@ -6,6 +6,7 @@ import AnswerCard from '../components/AnswerCard';
 import PIPPButton from '../components/PIPPButton';
 import Banner from '../components/Banner';
 import BottomSheetModal from '../components/BottomSheetModal';
+import PricingModal from '../components/PricingModal';
 import MeasurementSection from '../components/MeasurementSection';
 
 const TOTAL_STEPS = 3;
@@ -36,6 +37,7 @@ const QuestionnaireScreen: React.FC = () => {
   const [selectedSupply, setSelectedSupply] = useState<string | null>(null);
   const [selectedPlanGoal, setSelectedPlanGoal] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isPricingModalVisible, setIsPricingModalVisible] = useState<boolean>(false);
 
   // Store answers for each step
   const [answers, setAnswers] = useState<Record<number, string | null>>({});
@@ -474,6 +476,10 @@ const QuestionnaireScreen: React.FC = () => {
               </TouchableOpacity>
               ))}
 
+              <TouchableOpacity onPress={() => setIsPricingModalVisible(true)} activeOpacity={0.7} style={styles.pricingLinkContainer}>
+                <Text style={styles.pricingLinkText}>See how dosing and pricing work</Text>
+              </TouchableOpacity>
+
               <View style={styles.buttonContainer}>
                 <PIPPButton
                   title="Continue"
@@ -491,6 +497,11 @@ const QuestionnaireScreen: React.FC = () => {
       <BottomSheetModal
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
+      />
+      <PricingModal
+        visible={isPricingModalVisible}
+        onClose={() => setIsPricingModalVisible(false)}
+        brand={selectedMedBrand}
       />
     </SafeAreaView>
   );
@@ -1344,6 +1355,19 @@ const styles = StyleSheet.create({
     padding: 7,
     paddingBottom: 11,
     paddingHorizontal: 11,
+  },
+  pricingLinkContainer: {
+    alignSelf: 'center' as any,
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  pricingLinkText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: pippTheme.fontSize.body2,
+    fontWeight: pippTheme.fontWeight.semiBold.toString() as any,
+    lineHeight: pippTheme.lineHeight[22],
+    color: pippTheme.colors.text.link,
+    textDecorationLine: 'underline' as any,
   },
 });
 
