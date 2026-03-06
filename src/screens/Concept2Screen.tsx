@@ -402,8 +402,15 @@ const QuestionnaireScreen: React.FC = () => {
                       <Text style={styles.supplyPriceStrike}>£238</Text>
                     </View>
                   </View>
-                  <View style={styles.saveBadge}>
-                    <Text style={styles.saveBadgeText}>Save £53</Text>
+                  <View style={styles.badgeColumn}>
+                    <View style={styles.saveBadge}>
+                      <Text style={styles.saveBadgeText}>Save £53</Text>
+                    </View>
+                    <Image
+                      source={require('../images/klarna-tag.jpg')}
+                      style={styles.klarnaTag}
+                      resizeMode="contain"
+                    />
                   </View>
                 </TouchableOpacity>
 
@@ -910,6 +917,17 @@ const styles = StyleSheet.create({
     fontWeight: pippTheme.fontWeight.semiBold.toString() as any,
     lineHeight: pippTheme.lineHeight[12],
     color: pippTheme.colors.text.primary,
+  },
+  badgeColumn: {
+    flexDirection: 'column' as any,
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  klarnaTag: {
+    height: 16,
+    width: undefined as any,
+    aspectRatio: 646 / 115,
+    borderRadius: 4,
   },
   supplyPriceStrike: {
     fontFamily: pippTheme.fontFamily.body,
