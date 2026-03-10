@@ -1075,7 +1075,7 @@ const styles = StyleSheet.create({
     borderColor: pippTheme.colors.border.primary,
     borderWidth: 2,
     padding: 15,
-    backgroundImage: 'linear-gradient(180deg, #E1FFE5 0%, rgba(255, 255, 255, 0.00) 100%), linear-gradient(0deg, #FFF, #FFF)',
+    backgroundImage: 'linear-gradient(291deg, #FDFAF7 0%, #DEF4F7 100%)',
   } as any,
   planGoalLabel: {
     fontFamily: pippTheme.fontFamily.body,
