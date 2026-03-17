@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { pippTheme } from '../theme/pipp';
 import PIPPButton from '../components/PIPPButton';
+import PricingModal from '../components/PricingModal';
 
 // ---------------------------------------------------------------------------
 // Data
@@ -320,8 +321,7 @@ const Concept8Screen: React.FC = () => {
   const [consentChecked, setConsentChecked] = useState(false);
   const [exploringOther, setExploringOther] = useState(false);
   const [expandedFaqs, setExpandedFaqs] = useState<Set<number>>(new Set());
-  const [pricingTab, setPricingTab] = useState(0); // 0=per dose, 1=same strength, 2=mixed
-  const [showPricing, setShowPricing] = useState(false);
+  const [isPricingModalVisible, setIsPricingModalVisible] = useState(false);
   const [selectedPlanGoal, setSelectedPlanGoal] = useState<string | null>('increasing');
 
   // Default recommended medication (first in data)
@@ -745,73 +745,7 @@ const Concept8Screen: React.FC = () => {
     const singleBundle = med.bundles.single;
     const doubleBundle = med.bundles.double;
 
-    // Pricing data per tab
-    const wegovyPricing = {
-      perDose: [
-        { dose: '0.25mg', tag: 'starter', price: '£89', save: '£30' },
-        { dose: '0.25mg', tag: 'renewal', price: '£119' },
-        { dose: '0.5mg', price: '£139' },
-        { dose: '1mg', price: '£169' },
-        { dose: '1.7mg', price: '£189' },
-        { dose: '2.4mg', price: '£199' },
-      ],
-      sameStrength: [
-        { dose: '2 × 0.25mg', tag: 'starter', price: '£185', save: '£47' },
-        { dose: '2 × 0.25mg', tag: 'renewal', price: '£232' },
-        { dose: '2 × 0.5mg', price: '£271' },
-        { dose: '2 × 1mg', price: '£328' },
-        { dose: '2 × 1.7mg', price: '£367' },
-        { dose: '2 × 2.4mg', price: '£387' },
-      ],
-      mixed: [
-        { dose: '0.25 + 0.5mg', tag: 'starter', price: '£205', save: '£40' },
-        { dose: '0.25 + 0.5mg', tag: 'renewal', price: '£245' },
-        { dose: '0.5 + 1mg', price: '£293' },
-        { dose: '1 + 1.7mg', price: '£340' },
-        { dose: '1.7 + 2.4mg', price: '£375' },
-      ],
-    };
-
-    const mountjaroPricing = {
-      perDose: [
-        { dose: '2.5mg', tag: 'starter', price: '£149', save: '£30' },
-        { dose: '2.5mg', tag: 'renewal', price: '£179' },
-        { dose: '5mg', price: '£199' },
-        { dose: '7.5mg', price: '£249' },
-        { dose: '10mg', price: '£279' },
-        { dose: '12.5mg', price: '£299' },
-        { dose: '15mg', price: '£319' },
-      ],
-      sameStrength: [
-        { dose: '2 × 2.5mg', tag: 'starter', price: '£253', save: '£47' },
-        { dose: '2 × 2.5mg', tag: 'renewal', price: '£348' },
-        { dose: '2 × 5mg', price: '£388' },
-        { dose: '2 × 7.5mg', price: '£488' },
-        { dose: '2 × 10mg', price: '£548' },
-        { dose: '2 × 12.5mg', price: '£588' },
-        { dose: '2 × 15mg', price: '£628' },
-      ],
-      mixed: [
-        { dose: '2.5 + 5mg', tag: 'starter', price: '£325', save: '£40' },
-        { dose: '2.5 + 5mg', tag: 'renewal', price: '£368' },
-        { dose: '5 + 7.5mg', price: '£438' },
-        { dose: '7.5 + 10mg', price: '£518' },
-        { dose: '10 + 12.5mg', price: '£568' },
-        { dose: '12.5 + 15mg', price: '£608' },
-      ],
-    };
-
-    const pricing = activeMedKey === 'wegovy' ? wegovyPricing : mountjaroPricing;
-    const tabData = [pricing.perDose, pricing.sameStrength, pricing.mixed][pricingTab];
-    const tabLabels = ['Per dose', 'Same strength\nbundles', 'Mixed strength\nbundles'];
-    const supplyLabel = pricingTab === 0 ? '4-week supply · Free delivery' : '8-week supply · Free delivery';
-    const footerTexts = [
-      activeMedKey === 'wegovy'
-        ? '*First 0.25mg pen from £89. Subsequent 0.25mg orders from £119.'
-        : '*First 2.5mg pen from £149. Subsequent 2.5mg orders from £179.',
-      'Each bundle includes 2 pens of the same dosage.',
-      'Mixed bundles include 2 different dose pens for smooth transitions.',
-    ];
+    const pricingBrand = activeMedKey === 'wegovy' ? 'wegovy-flextouch' : 'mounjaro-kwikpen';
 
     return (
       <View style={styles.stepContainer}>
@@ -888,60 +822,13 @@ const Concept8Screen: React.FC = () => {
           </View>
         </View>
 
-        {/* Pricing breakdown toggle */}
+        {/* Pricing breakdown link */}
         <TouchableOpacity
-          onPress={() => setShowPricing(!showPricing)}
+          onPress={() => setIsPricingModalVisible(true)}
           style={styles.exploreButton}
         >
-          <Text style={styles.exploreButtonText}>
-            {showPricing ? 'Hide pricing breakdown' : 'View pricing breakdown'}
-          </Text>
+          <Text style={styles.exploreButtonText}>View pricing breakdown</Text>
         </TouchableOpacity>
-
-        {showPricing && (
-          <View style={styles.bundlePricingSection}>
-            {/* Tab bar */}
-            <View style={styles.pricingTabBar}>
-              {tabLabels.map((label, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={[styles.pricingTabItem, pricingTab === i && styles.pricingTabItemActive]}
-                  onPress={() => setPricingTab(i)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.pricingTabText, pricingTab === i && styles.pricingTabTextActive]}>{label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Supply info */}
-            <Text style={styles.pricingSupplyInfo}>{supplyLabel}</Text>
-
-            {/* Table */}
-            <View style={styles.pricingTable}>
-              <View style={[styles.pricingRow, styles.pricingHeaderRow]}>
-                <Text style={styles.pricingHeaderLabel}>DOSAGE</Text>
-                <Text style={styles.pricingHeaderValue}>PRICE</Text>
-              </View>
-              {tabData.map((row, index) => (
-                <View key={`${row.dose}-${row.tag || index}`} style={[styles.pricingRow, index < tabData.length - 1 && styles.pricingRowBorder]}>
-                  <View style={styles.pricingDoseCol}>
-                    <Text style={styles.pricingDoseText}>{row.dose}</Text>
-                    {row.tag && <Text style={styles.pricingDoseTag}>{row.tag}</Text>}
-                    {row.save && (
-                      <View style={styles.pricingSavePill}>
-                        <Text style={styles.pricingSavePillText}>save {row.save}</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={styles.pricingPriceText}>{row.price}</Text>
-                </View>
-              ))}
-            </View>
-
-            <Text style={styles.pricingFooter}>{footerTexts[pricingTab]}</Text>
-          </View>
-        )}
 
       </View>
     );
@@ -1347,6 +1234,11 @@ const Concept8Screen: React.FC = () => {
           />
         </View>
       )}
+      <PricingModal
+        visible={isPricingModalVisible}
+        onClose={() => setIsPricingModalVisible(false)}
+        brand={activeMedKey === 'wegovy' ? 'wegovy-flextouch' : 'mounjaro-kwikpen'}
+      />
     </SafeAreaView>
   );
 };
