@@ -251,7 +251,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 8,
-  },
+    maxWidth: 780,
+    width: '100%',
+    alignSelf: 'center',
+  } as any,
   heading: {
     fontFamily: pippTheme.fontFamily.heading,
     fontSize: pippTheme.fontSize.header3,
@@ -392,7 +395,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 24,
-  },
+    maxWidth: 780,
+    width: '100%',
+    alignSelf: 'center',
+  } as any,
 });
 
 export default PricingModal;

@@ -1522,8 +1522,9 @@ const Concept9Screen: React.FC = () => {
   };
 
   return (
+    <View style={[styles.safeAreaOuter, step === 0 && styles.safeAreaWelcomeBg] as any}>
+    {renderHeader()}
     <SafeAreaView style={styles.safeArea}>
-      {renderHeader()}
       <ScrollView
         ref={scrollViewRef}
         nativeID="c9-scroll"
@@ -1557,6 +1558,7 @@ const Concept9Screen: React.FC = () => {
         brand={activeMedKey === 'wegovy' ? 'wegovy-flextouch' : 'mounjaro-kwikpen'}
       />
     </SafeAreaView>
+    </View>
   );
 };
 
@@ -1566,11 +1568,20 @@ const Concept9Screen: React.FC = () => {
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
   // Layout
-  safeArea: {
+  safeAreaOuter: {
     flex: 1,
     backgroundColor: pippTheme.colors.background.primary,
+  } as any,
+  safeAreaWelcomeBg: {
+    backgroundImage: 'linear-gradient(180deg, #FFFFFF 0%, #F1F9FF 20%, #E3F3FF 50%, #DEF4F7 80%, #D0EEF2 100%)',
+  } as any,
+  safeArea: {
+    flex: 1,
     WebkitFontSmoothing: 'antialiased',
     MozOsxFontSmoothing: 'grayscale',
+    maxWidth: 780,
+    width: '100%',
+    alignSelf: 'center',
   } as any,
   scrollView: {
     flex: 1,
@@ -1649,7 +1660,6 @@ const styles = StyleSheet.create({
   welcomeContainer: {
     flexGrow: 1,
     minHeight: '100vh',
-    backgroundImage: 'linear-gradient(180deg, #FFFFFF 0%, #F1F9FF 20%, #E3F3FF 50%, #DEF4F7 80%, #D0EEF2 100%)',
     paddingHorizontal: 20,
     paddingBottom: 48,
   } as any,
@@ -2418,8 +2428,10 @@ const styles = StyleSheet.create({
   stickyFooter: {
     position: 'fixed',
     bottom: 0,
-    left: 0,
-    right: 0,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    maxWidth: 780,
+    width: '100%',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 24,
@@ -2436,7 +2448,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    alignSelf: 'stretch',
+    width: '100vw',
+    position: 'relative',
+    left: '50%',
+    transform: 'translateX(-50%)',
     backgroundImage: 'linear-gradient(181deg, rgba(255, 255, 255, 0.00) 81.18%, rgba(0, 0, 0, 0.04) 99.52%)',
     overflow: 'hidden',
   } as any,
