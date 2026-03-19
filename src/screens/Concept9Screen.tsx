@@ -361,7 +361,7 @@ const faqStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 16,
     paddingHorizontal: 16,
     gap: 16,
   } as any,
@@ -519,8 +519,6 @@ const AnimatedConsentSection: React.FC<{
       style={[
         consentStyles.consentCard,
         isExpanded && consentStyles.consentCardExpanded,
-        isRead && !isExpanded && consentStyles.consentCardRead,
-        isHovered && !isExpanded && { boxShadow: C9.card.shadowMd } as any,
       ]}
       activeOpacity={0.7}
       accessibilityRole="button"
@@ -529,22 +527,15 @@ const AnimatedConsentSection: React.FC<{
       {...{ onMouseEnter: () => setHoveredCard(cardId), onMouseLeave: () => setHoveredCard(null) } as any}
     >
       <View style={consentStyles.consentCardHeader}>
-        <View style={consentStyles.consentCardTitleRow}>
-          {isRead && !isExpanded && (
-            <Text style={consentStyles.consentReadCheck}>✓</Text>
-          )}
-          <Text style={consentStyles.consentCardTitle}>{section.title}</Text>
-        </View>
-        <View style={consentStyles.consentChevronContainer}>
-          <Text
-            style={[
-              consentStyles.consentChevron,
-              isExpanded && consentStyles.consentChevronExpanded,
-            ]}
-          >
-            ▾
-          </Text>
-        </View>
+        <Text style={consentStyles.consentCardTitle}>{section.title}</Text>
+        <Image
+          source={require('../theme/icons/expand-more.svg')}
+          style={[
+            consentStyles.consentChevronIcon,
+            isExpanded && consentStyles.consentChevronExpanded,
+          ] as any}
+          resizeMode="contain"
+        />
       </View>
       <Animated.View style={{ maxHeight, opacity: bodyOpacity, overflow: 'hidden' } as any}>
         <View style={consentStyles.consentCardBody}>
@@ -563,42 +554,20 @@ const AnimatedConsentSection: React.FC<{
 // Consent card styles (extracted for AnimatedConsentSection)
 const consentStyles = StyleSheet.create({
   consentCard: {
-    borderRadius: C9.card.radius,
-    borderWidth: 1,
-    borderColor: pippTheme.colors.border.default,
-    padding: C9.card.padding,
-    boxShadow: C9.card.shadowSm,
-    transition: C9.card.transition,
+    alignSelf: 'stretch',
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
+    overflow: 'hidden',
   } as any,
   consentCardExpanded: {
-    borderColor: pippTheme.colors.border.primary,
-    borderWidth: 2,
-    padding: 15,
-    backgroundImage: C9.card.bgSelected,
-    boxShadow: C9.card.shadowMd,
   } as any,
-  consentCardRead: {
-    borderColor: '#00C376',
-    backgroundColor: 'rgba(0, 195, 118, 0.06)',
-  },
   consentCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: 48,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   } as any,
-  consentCardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  } as any,
-  consentReadCheck: {
-    color: '#00C376',
-    fontSize: C9.fontSize.body,
-    fontWeight: pippTheme.fontWeight.semiBold.toString() as any,
-    lineHeight: C9.lineHeight.body,
-  },
   consentCardTitle: {
     fontFamily: pippTheme.fontFamily.body,
     fontSize: C9.fontSize.body,
@@ -606,24 +575,17 @@ const consentStyles = StyleSheet.create({
     color: pippTheme.colors.text.primary,
     lineHeight: C9.lineHeight.body,
   },
-  consentChevronContainer: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  consentChevron: {
-    fontFamily: pippTheme.fontFamily.body,
-    fontSize: C9.fontSize.body,
-    color: pippTheme.colors.text.subtle,
-    lineHeight: C9.lineHeight.body,
+  consentChevronIcon: {
+    width: 16,
+    height: 16,
     transition: 'transform 0.3s ease',
   } as any,
   consentChevronExpanded: {
     transform: [{ rotate: '180deg' }],
   },
   consentCardBody: {
-    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
     gap: 8,
   } as any,
   consentBulletRow: {
@@ -670,6 +632,7 @@ const premiumCtaStyles = StyleSheet.create({
 // ---------------------------------------------------------------------------
 const Concept9Screen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
+  const scrollDomRef = useRef<HTMLDivElement>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -756,9 +719,22 @@ const Concept9Screen: React.FC = () => {
   // Navigation
   // -------------------------------------------------------------------------
   const scrollToTop = () => {
-    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     window.scrollTo(0, 0);
+    // Find and reset all scrollable ancestors
+    const el = document.getElementById('c9-scroll');
+    if (el) el.scrollTop = 0;
+    // Also walk up to find any scrolling parent
+    let node = el?.parentElement;
+    while (node) {
+      if (node.scrollTop > 0) node.scrollTop = 0;
+      node = node.parentElement;
+    }
   };
+
+  // Reset scroll on every step change
+  useEffect(() => {
+    scrollToTop();
+  }, [step]);
 
   const animateTransition = (nextStep: number, skipPush?: boolean) => {
     Animated.timing(fadeAnim, {
@@ -1478,11 +1454,6 @@ const Concept9Screen: React.FC = () => {
           Please read and acknowledge the following information.
         </Text>
 
-        {/* Read progress */}
-        <Text style={[styles.consentProgress, { color: consentRead.size === CONSENT_SECTIONS.length ? '#00C376' : pippTheme.colors.text.subtle }]}>
-          {consentRead.size} of {CONSENT_SECTIONS.length} sections reviewed
-        </Text>
-
         <View style={styles.consentSections}>
           {CONSENT_SECTIONS.map((section, index) => (
             <AnimatedConsentSection
@@ -1524,23 +1495,14 @@ const Concept9Screen: React.FC = () => {
       </View>
 
       <View style={styles.ctaContainer}>
-        <PremiumCTAWrapper>
-          <PIPPButton
-            text="Confirm and continue"
-            onPress={() => {}}
-            disabled={!consentChecked}
-          />
-        </PremiumCTAWrapper>
+        <PIPPButton
+          text="Confirm and continue"
+          onPress={() => {}}
+          disabled={!consentChecked}
+        />
         <Text style={styles.footerText}>
-          By continuing, you confirm this information is accurate
+          Your order will be reviewed by our clinical team within 24 hours.
         </Text>
-        {/* What happens next */}
-        <View style={styles.whatHappensNext}>
-          <Text style={{ fontSize: 18, lineHeight: 22 }}>{'ℹ️'}</Text>
-          <Text style={styles.whatHappensNextText}>
-            Your order will be reviewed by our clinical team within 24 hours. We'll notify you once your treatment is approved and dispatched.
-          </Text>
-        </View>
       </View>
     </View>
   );
@@ -1564,10 +1526,11 @@ const Concept9Screen: React.FC = () => {
       {renderHeader()}
       <ScrollView
         ref={scrollViewRef}
+        nativeID="c9-scroll"
         style={styles.scrollView}
         contentContainerStyle={step === 0 ? styles.scrollContentFixed : step === 3 ? [styles.scrollContent, { paddingBottom: 80 }] : styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={step !== 0}
+        scrollEnabled
       >
         <Animated.View
           style={{
@@ -2812,7 +2775,8 @@ const styles = StyleSheet.create({
     lineHeight: C9.lineHeight.secondary,
   },
   consentSections: {
-    gap: 12,
+    alignSelf: 'stretch',
+    gap: 8,
   } as any,
   consentProgress: {
     fontFamily: pippTheme.fontFamily.body,
