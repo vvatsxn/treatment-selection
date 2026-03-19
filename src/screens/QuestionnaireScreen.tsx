@@ -445,7 +445,15 @@ const QuestionnaireScreen: React.FC = () => {
             <>
             <Text style={styles.bundleDisclaimer}>Future bundle prices vary by dose</Text>
 
-            <View style={styles.altCardsContainer}>
+            <View style={styles.otherTreatmentsFrame}>
+              <View style={styles.otherTreatmentsHeader}>
+                <Image
+                  source={require('../theme/icons/check_circle.svg')}
+                  style={styles.otherTreatmentsIcon}
+                />
+                <Text style={styles.otherTreatmentsLabel}>You're also eligible for</Text>
+              </View>
+
               <TouchableOpacity style={styles.mountjaroCard} onPress={() => { setSelectedTreatment('mounjaro-kwikpen'); setTreatmentSelected(true); }} activeOpacity={0.7}>
                 <View style={styles.altCardImageArea}>
                   <Image
@@ -455,12 +463,9 @@ const QuestionnaireScreen: React.FC = () => {
                 </View>
                 <View style={styles.altCardContent}>
                   <View style={styles.altCardLeft}>
-                    <View style={[styles.altCardBadge, { backgroundColor: '#F8EBFF' }]}>
-                      <Text style={styles.altCardBadgeText}>Or, instead</Text>
-                    </View>
                     <Text style={styles.altCardTitle}>Mounjaro KwikPen</Text>
-                    <Text style={styles.altCardPrice}><Text style={styles.altCardPriceStrike}>£119</Text> <Text style={styles.altCardPriceActive}>£89</Text> per month</Text>
-                    <Text style={styles.altCardPlan}>As part of a 3-month plan</Text>
+                    <Text style={styles.altCardPrice}><Text style={styles.altCardPriceStrike}>£119</Text> <Text style={styles.altCardPriceActive}>£89</Text> per pen</Text>
+                    <Text style={styles.altCardPlan}>Starting dose price</Text>
                   </View>
                   <Image
                     source={require('../theme/icons/chevron-right.svg')}
@@ -468,7 +473,7 @@ const QuestionnaireScreen: React.FC = () => {
                   />
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.wegovyPillCard} onPress={() => { setSelectedTreatment('wegovy-pill'); setTreatmentSelected(true); }} activeOpacity={0.7}>
+              <TouchableOpacity style={[styles.wegovyPillCard, { marginTop: 8 }]} onPress={() => { setSelectedTreatment('wegovy-pill'); setTreatmentSelected(true); }} activeOpacity={0.7}>
                 <View style={styles.altCardImageArea}>
                   <Image
                     source={require('../images/wegovy-pill.png')}
@@ -478,12 +483,9 @@ const QuestionnaireScreen: React.FC = () => {
                 </View>
                 <View style={styles.altCardContent}>
                   <View style={styles.altCardLeft}>
-                    <View style={[styles.altCardBadge, { backgroundColor: '#DCF2FF' }]}>
-                      <Text style={styles.altCardBadgeText}>Or, instead</Text>
-                    </View>
                     <Text style={styles.altCardTitle}>Wegovy Pill</Text>
-                    <Text style={styles.altCardPrice}><Text style={styles.altCardPriceStrike}>£119</Text> <Text style={styles.altCardPriceActive}>£89</Text> per month</Text>
-                    <Text style={styles.altCardPlan}>As part of a 3-month plan</Text>
+                    <Text style={styles.altCardPrice}><Text style={styles.altCardPriceStrike}>£119</Text> <Text style={styles.altCardPriceActive}>£89</Text> per pen</Text>
+                    <Text style={styles.altCardPlan}>Starting dose price</Text>
                   </View>
                   <Image
                     source={require('../theme/icons/chevron-right.svg')}
@@ -491,7 +493,7 @@ const QuestionnaireScreen: React.FC = () => {
                   />
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.orfoglipronCard} onPress={() => { setSelectedTreatment('orfoglipron'); setTreatmentSelected(true); }} activeOpacity={0.7}>
+              <TouchableOpacity style={[styles.orfoglipronCard, { marginTop: 8 }]} onPress={() => { setSelectedTreatment('orfoglipron'); setTreatmentSelected(true); }} activeOpacity={0.7}>
                 <View style={styles.altCardImageArea}>
                   <Image
                     source={require('../images/orfoglipron-tablet.png')}
@@ -501,12 +503,9 @@ const QuestionnaireScreen: React.FC = () => {
                 </View>
                 <View style={styles.altCardContent}>
                   <View style={styles.altCardLeft}>
-                    <View style={[styles.altCardBadge, { backgroundColor: '#FBE3E3' }]}>
-                      <Text style={styles.altCardBadgeText}>Or, instead</Text>
-                    </View>
                     <Text style={styles.altCardTitle}>Orfoglipron tablet</Text>
-                    <Text style={styles.altCardPrice}><Text style={styles.altCardPriceStrike}>£119</Text> <Text style={styles.altCardPriceActive}>£89</Text> per month</Text>
-                    <Text style={styles.altCardPlan}>As part of a 3-month plan</Text>
+                    <Text style={styles.altCardPrice}><Text style={styles.altCardPriceStrike}>£119</Text> <Text style={styles.altCardPriceActive}>£89</Text> per pen</Text>
+                    <Text style={styles.altCardPlan}>Starting dose price</Text>
                   </View>
                   <Image
                     source={require('../theme/icons/chevron-right.svg')}
@@ -880,6 +879,38 @@ const styles = StyleSheet.create({
     marginTop: 20,
     gap: 20,
     alignSelf: 'stretch' as any,
+  },
+  otherTreatmentsFrame: {
+    paddingHorizontal: 8,
+    flexDirection: 'column' as any,
+    alignItems: 'flex-start' as any,
+    alignSelf: 'stretch' as any,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    backgroundImage: 'linear-gradient(0deg, #FFF 70.78%, #F1F8FC 100%)' as any,
+    marginTop: 32,
+  },
+  otherTreatmentsHeader: {
+    flexDirection: 'row' as any,
+    paddingVertical: 12,
+    alignItems: 'center' as any,
+    gap: 4,
+    alignSelf: 'stretch' as any,
+  },
+  otherTreatmentsIcon: {
+    width: 16,
+    height: 16,
+    tintColor: pippTheme.colors.icon.default,
+  },
+  otherTreatmentsLabel: {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 10,
+    fontWeight: '600' as any,
+    lineHeight: 12,
+    color: '#575D84',
+    textAlign: 'center' as any,
   },
   mountjaroCard: {
     flexDirection: 'row' as any,
