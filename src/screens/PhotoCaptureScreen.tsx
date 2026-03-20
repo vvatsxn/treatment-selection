@@ -33,9 +33,19 @@ const getDeliveryDateRange = () => {
 const PhotoCaptureScreen: React.FC = () => {
   const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
   const [pressedBtn, setPressedBtn] = useState<string | null>(null);
-  const isUploadPage = window.location.pathname.startsWith('/photo-capture/upload');
+  const pathname = window.location.pathname;
+  const isUploadPage = pathname.startsWith('/photo-capture/upload');
+  const isCameraPage = pathname.startsWith('/photo-capture/camera');
 
   const isMobile = isMobileOrTablet();
+
+  // Captured photos state
+  const [capturedPhotos, setCapturedPhotos] = useState<Record<string, string>>({});
+  const [photoReceived, setPhotoReceived] = useState(false);
+
+  // Camera page state
+  const [cameraPageState, setCameraPageState] = useState<'loading' | 'ready' | 'success'>('loading');
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   // QR modal state (desktop)
   const [qrModalVisible, setQrModalVisible] = useState(false);
@@ -45,6 +55,36 @@ const PhotoCaptureScreen: React.FC = () => {
 
   // Hidden file input refs (mobile)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Handle file capture from input
+  const handleFileCapture = (buttonId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setCapturedPhotos(prev => ({ ...prev, [buttonId]: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // BroadcastChannel listener for QR modal (desktop receives photos)
+  React.useEffect(() => {
+    if (!qrModalVisible) return;
+    const channel = new BroadcastChannel('photo-capture');
+    channel.onmessage = () => {
+      setPhotoReceived(true);
+    };
+    return () => channel.close();
+  }, [qrModalVisible]);
+
+  // Camera page: auto-trigger camera after brief loading
+  React.useEffect(() => {
+    if (!isCameraPage) return;
+    const timer = setTimeout(() => {
+      setCameraPageState('ready');
+      if (cameraInputRef.current) cameraInputRef.current.click();
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [isCameraPage]);
 
   React.useEffect(() => {
     if (qrModalVisible) {
@@ -72,7 +112,71 @@ const PhotoCaptureScreen: React.FC = () => {
 
   const handleCloseQrModal = () => {
     setQrModalVisible(false);
+    setPhotoReceived(false);
   };
+
+  // Camera page (opened via QR code scan)
+  if (isCameraPage) {
+    const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setCameraPageState('success');
+        // Notify desktop tab via BroadcastChannel
+        const channel = new BroadcastChannel('photo-capture');
+        channel.postMessage({ type: 'photo-captured' });
+        channel.close();
+      }
+    };
+
+    return (
+      <View style={styles.outerContainer}>
+        <View style={styles.uploadHeader}>
+          <View style={styles.uploadHeaderRow}>
+            <View style={styles.uploadBackPlaceholder} />
+            <Image source={require('../images/phlo-clinic-logo-default.png')} style={styles.headerLogo} resizeMode="contain" accessibilityLabel="Phlo Clinic logo" />
+            <View style={styles.uploadBackPlaceholder} />
+          </View>
+        </View>
+        <View style={styles.cameraPageContent}>
+          {cameraPageState === 'loading' && (
+            <View style={styles.cameraStateContainer}>
+              <ActivityIndicator size="large" color="#086A74" />
+              <Text style={styles.cameraStateHeading}>Opening camera...</Text>
+              <Text style={styles.cameraStateSubtext}>Please allow camera access when prompted.</Text>
+            </View>
+          )}
+          {cameraPageState === 'ready' && (
+            <View style={styles.cameraStateContainer}>
+              <ActivityIndicator size="large" color="#086A74" />
+              <Text style={styles.cameraStateHeading}>Take your photo</Text>
+              <Text style={styles.cameraStateSubtext}>Your camera should open automatically. If not, tap the button below.</Text>
+              <View
+                style={[styles.secondaryButton, { marginTop: 16, alignSelf: 'center' }]}
+                {...{ onClick: () => { if (cameraInputRef.current) cameraInputRef.current.click(); } } as any}
+              >
+                <Text style={styles.secondaryButtonText}>Open camera</Text>
+              </View>
+            </View>
+          )}
+          {cameraPageState === 'success' && (
+            <View style={styles.cameraStateContainer}>
+              <Image source={require('../theme/icons/check_circle.svg')} style={styles.cameraSuccessIcon} resizeMode="contain" />
+              <Text style={styles.cameraStateHeading}>Photo sent!</Text>
+              <Text style={styles.cameraStateSubtext}>You can now return to your desktop to continue.</Text>
+            </View>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            ref={cameraInputRef}
+            style={{ display: 'none' }}
+            onChange={handleCameraCapture}
+          />
+        </View>
+      </View>
+    );
+  }
 
   if (isUploadPage) {
     return (
@@ -197,21 +301,44 @@ const PhotoCaptureScreen: React.FC = () => {
               </View>
 
               {/* Upload photo ID dropzone */}
-              <View style={styles.uploadDropzone}>
-                <View
-                  style={[styles.secondaryButton, hoveredBtn === 'selectPhotoId' && styles.secondaryButtonHover, pressedBtn === 'selectPhotoId' && styles.secondaryButtonPressed]}
-                  onMouseEnter={() => setHoveredBtn('selectPhotoId')}
-                  onMouseLeave={() => setHoveredBtn(null)}
-                  onMouseDown={() => setPressedBtn('selectPhotoId')}
-                  onMouseUp={() => setPressedBtn(null)}
-                  {...{ onClick: () => handleUploadButtonPress('selectPhotoId') } as any}
-                >
-                  <Text style={styles.secondaryButtonText}>{isMobile ? 'Take photo ID' : 'Select photo ID'}</Text>
+              {capturedPhotos['selectPhotoId'] ? (
+                <View style={styles.capturedDropzone}>
+                  <img src={capturedPhotos['selectPhotoId']} style={styles.capturedThumbnail as any} />
+                  <View style={styles.capturedInfo}>
+                    <View style={styles.capturedCheckRow}>
+                      <Image source={require('../theme/icons/check_circle.svg')} style={styles.capturedCheckIcon} resizeMode="contain" />
+                      <Text style={styles.capturedText}>Photo captured</Text>
+                    </View>
+                    <View
+                      style={[styles.retakeButton, hoveredBtn === 'retakePhotoId' && styles.secondaryButtonHover]}
+                      onMouseEnter={() => setHoveredBtn('retakePhotoId')}
+                      onMouseLeave={() => setHoveredBtn(null)}
+                      {...{ onClick: () => handleUploadButtonPress('selectPhotoId') } as any}
+                    >
+                      <Text style={styles.retakeButtonText}>Retake</Text>
+                    </View>
+                  </View>
+                  {isMobile && (
+                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectPhotoId'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectPhotoId', file); if (e.target) e.target.value = ''; }} />
+                  )}
                 </View>
-                {isMobile && (
-                  <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectPhotoId'] = el; }} style={{ display: 'none' }} onChange={(e) => { if (e.target) e.target.value = ''; }} />
-                )}
-              </View>
+              ) : (
+                <View style={styles.uploadDropzone}>
+                  <View
+                    style={[styles.secondaryButton, hoveredBtn === 'selectPhotoId' && styles.secondaryButtonHover, pressedBtn === 'selectPhotoId' && styles.secondaryButtonPressed]}
+                    onMouseEnter={() => setHoveredBtn('selectPhotoId')}
+                    onMouseLeave={() => setHoveredBtn(null)}
+                    onMouseDown={() => setPressedBtn('selectPhotoId')}
+                    onMouseUp={() => setPressedBtn(null)}
+                    {...{ onClick: () => handleUploadButtonPress('selectPhotoId') } as any}
+                  >
+                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take photo ID' : 'Select photo ID'}</Text>
+                  </View>
+                  {isMobile && (
+                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectPhotoId'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectPhotoId', file); if (e.target) e.target.value = ''; }} />
+                  )}
+                </View>
+              )}
 
               <View style={styles.uploadDivider} />
 
@@ -259,21 +386,44 @@ const PhotoCaptureScreen: React.FC = () => {
                 </View>
 
                 {/* Upload front-facing photo dropzone */}
-                <View style={styles.uploadDropzone}>
-                  <View
-                    style={[styles.secondaryButton, hoveredBtn === 'selectFront' && styles.secondaryButtonHover, pressedBtn === 'selectFront' && styles.secondaryButtonPressed]}
-                    onMouseEnter={() => setHoveredBtn('selectFront')}
-                    onMouseLeave={() => setHoveredBtn(null)}
-                    onMouseDown={() => setPressedBtn('selectFront')}
-                    onMouseUp={() => setPressedBtn(null)}
-                    {...{ onClick: () => handleUploadButtonPress('selectFront') } as any}
-                  >
-                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take front-facing photo' : 'Select front-facing photo'}</Text>
+                {capturedPhotos['selectFront'] ? (
+                  <View style={styles.capturedDropzone}>
+                    <img src={capturedPhotos['selectFront']} style={styles.capturedThumbnail as any} />
+                    <View style={styles.capturedInfo}>
+                      <View style={styles.capturedCheckRow}>
+                        <Image source={require('../theme/icons/check_circle.svg')} style={styles.capturedCheckIcon} resizeMode="contain" />
+                        <Text style={styles.capturedText}>Photo captured</Text>
+                      </View>
+                      <View
+                        style={[styles.retakeButton, hoveredBtn === 'retakeFront' && styles.secondaryButtonHover]}
+                        onMouseEnter={() => setHoveredBtn('retakeFront')}
+                        onMouseLeave={() => setHoveredBtn(null)}
+                        {...{ onClick: () => handleUploadButtonPress('selectFront') } as any}
+                      >
+                        <Text style={styles.retakeButtonText}>Retake</Text>
+                      </View>
+                    </View>
+                    {isMobile && (
+                      <input type="file" accept="image/*" capture="user" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectFront', file); if (e.target) e.target.value = ''; }} />
+                    )}
                   </View>
-                  {isMobile && (
-                    <input type="file" accept="image/*" capture="user" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { if (e.target) e.target.value = ''; }} />
-                  )}
-                </View>
+                ) : (
+                  <View style={styles.uploadDropzone}>
+                    <View
+                      style={[styles.secondaryButton, hoveredBtn === 'selectFront' && styles.secondaryButtonHover, pressedBtn === 'selectFront' && styles.secondaryButtonPressed]}
+                      onMouseEnter={() => setHoveredBtn('selectFront')}
+                      onMouseLeave={() => setHoveredBtn(null)}
+                      onMouseDown={() => setPressedBtn('selectFront')}
+                      onMouseUp={() => setPressedBtn(null)}
+                      {...{ onClick: () => handleUploadButtonPress('selectFront') } as any}
+                    >
+                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Take front-facing photo' : 'Select front-facing photo'}</Text>
+                    </View>
+                    {isMobile && (
+                      <input type="file" accept="image/*" capture="user" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectFront', file); if (e.target) e.target.value = ''; }} />
+                    )}
+                  </View>
+                )}
               </View>
 
               <View style={styles.uploadDivider} />
@@ -318,21 +468,44 @@ const PhotoCaptureScreen: React.FC = () => {
               </View>
 
               {/* Upload side-on photo dropzone */}
-              <View style={styles.uploadDropzone}>
-                <View
-                  style={[styles.secondaryButton, hoveredBtn === 'selectSide' && styles.secondaryButtonHover, pressedBtn === 'selectSide' && styles.secondaryButtonPressed]}
-                  onMouseEnter={() => setHoveredBtn('selectSide')}
-                  onMouseLeave={() => setHoveredBtn(null)}
-                  onMouseDown={() => setPressedBtn('selectSide')}
-                  onMouseUp={() => setPressedBtn(null)}
-                  {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
-                >
-                  <Text style={styles.secondaryButtonText}>{isMobile ? 'Take side-on photo' : 'Select side-on photo'}</Text>
+              {capturedPhotos['selectSide'] ? (
+                <View style={styles.capturedDropzone}>
+                  <img src={capturedPhotos['selectSide']} style={styles.capturedThumbnail as any} />
+                  <View style={styles.capturedInfo}>
+                    <View style={styles.capturedCheckRow}>
+                      <Image source={require('../theme/icons/check_circle.svg')} style={styles.capturedCheckIcon} resizeMode="contain" />
+                      <Text style={styles.capturedText}>Photo captured</Text>
+                    </View>
+                    <View
+                      style={[styles.retakeButton, hoveredBtn === 'retakeSide' && styles.secondaryButtonHover]}
+                      onMouseEnter={() => setHoveredBtn('retakeSide')}
+                      onMouseLeave={() => setHoveredBtn(null)}
+                      {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
+                    >
+                      <Text style={styles.retakeButtonText}>Retake</Text>
+                    </View>
+                  </View>
+                  {isMobile && (
+                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectSide', file); if (e.target) e.target.value = ''; }} />
+                  )}
                 </View>
-                {isMobile && (
-                  <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { if (e.target) e.target.value = ''; }} />
-                )}
-              </View>
+              ) : (
+                <View style={styles.uploadDropzone}>
+                  <View
+                    style={[styles.secondaryButton, hoveredBtn === 'selectSide' && styles.secondaryButtonHover, pressedBtn === 'selectSide' && styles.secondaryButtonPressed]}
+                    onMouseEnter={() => setHoveredBtn('selectSide')}
+                    onMouseLeave={() => setHoveredBtn(null)}
+                    onMouseDown={() => setPressedBtn('selectSide')}
+                    onMouseUp={() => setPressedBtn(null)}
+                    {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
+                  >
+                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take side-on photo' : 'Select side-on photo'}</Text>
+                  </View>
+                  {isMobile && (
+                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectSide', file); if (e.target) e.target.value = ''; }} />
+                  )}
+                </View>
+              )}
 
               <View style={styles.uploadDivider} />
 
@@ -375,21 +548,44 @@ const PhotoCaptureScreen: React.FC = () => {
               </View>
 
               {/* Upload weight reading photo dropzone */}
-              <View style={styles.uploadDropzone}>
-                <View
-                  style={[styles.secondaryButton, hoveredBtn === 'selectWeight' && styles.secondaryButtonHover, pressedBtn === 'selectWeight' && styles.secondaryButtonPressed]}
-                  onMouseEnter={() => setHoveredBtn('selectWeight')}
-                  onMouseLeave={() => setHoveredBtn(null)}
-                  onMouseDown={() => setPressedBtn('selectWeight')}
-                  onMouseUp={() => setPressedBtn(null)}
-                  {...{ onClick: () => handleUploadButtonPress('selectWeight') } as any}
-                >
-                  <Text style={styles.secondaryButtonText}>{isMobile ? 'Take weight reading photo' : 'Select weight reading photo'}</Text>
+              {capturedPhotos['selectWeight'] ? (
+                <View style={styles.capturedDropzone}>
+                  <img src={capturedPhotos['selectWeight']} style={styles.capturedThumbnail as any} />
+                  <View style={styles.capturedInfo}>
+                    <View style={styles.capturedCheckRow}>
+                      <Image source={require('../theme/icons/check_circle.svg')} style={styles.capturedCheckIcon} resizeMode="contain" />
+                      <Text style={styles.capturedText}>Photo captured</Text>
+                    </View>
+                    <View
+                      style={[styles.retakeButton, hoveredBtn === 'retakeWeight' && styles.secondaryButtonHover]}
+                      onMouseEnter={() => setHoveredBtn('retakeWeight')}
+                      onMouseLeave={() => setHoveredBtn(null)}
+                      {...{ onClick: () => handleUploadButtonPress('selectWeight') } as any}
+                    >
+                      <Text style={styles.retakeButtonText}>Retake</Text>
+                    </View>
+                  </View>
+                  {isMobile && (
+                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectWeight', file); if (e.target) e.target.value = ''; }} />
+                  )}
                 </View>
-                {isMobile && (
-                  <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { if (e.target) e.target.value = ''; }} />
-                )}
-              </View>
+              ) : (
+                <View style={styles.uploadDropzone}>
+                  <View
+                    style={[styles.secondaryButton, hoveredBtn === 'selectWeight' && styles.secondaryButtonHover, pressedBtn === 'selectWeight' && styles.secondaryButtonPressed]}
+                    onMouseEnter={() => setHoveredBtn('selectWeight')}
+                    onMouseLeave={() => setHoveredBtn(null)}
+                    onMouseDown={() => setPressedBtn('selectWeight')}
+                    onMouseUp={() => setPressedBtn(null)}
+                    {...{ onClick: () => handleUploadButtonPress('selectWeight') } as any}
+                  >
+                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take weight reading photo' : 'Select weight reading photo'}</Text>
+                  </View>
+                  {isMobile && (
+                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectWeight', file); if (e.target) e.target.value = ''; }} />
+                  )}
+                </View>
+              )}
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -412,7 +608,7 @@ const PhotoCaptureScreen: React.FC = () => {
                 <View style={styles.qrCodeSection}>
                   <View style={styles.qrCodeWrapper}>
                     <QRCodeSVG
-                      value={`${window.location.origin}/photo-capture/upload`}
+                      value={`${window.location.origin}/photo-capture/camera`}
                       size={180}
                       level="M"
                       bgColor="#FFFFFF"
@@ -427,11 +623,23 @@ const PhotoCaptureScreen: React.FC = () => {
                 <View style={styles.qrDivider} />
 
                 <View style={styles.qrWaitingSection}>
-                  <ActivityIndicator size="small" color="#086A74" />
-                  <Text style={styles.qrWaitingText}>Waiting for photos...</Text>
-                  <Text style={styles.qrWaitingSubtext}>
-                    Once you{'\u2019'}ve taken your photos on your mobile device, they{'\u2019'}ll appear here automatically.
-                  </Text>
+                  {photoReceived ? (
+                    <>
+                      <Image source={require('../theme/icons/check_circle.svg')} style={styles.qrReceivedIcon} resizeMode="contain" />
+                      <Text style={styles.qrWaitingText}>Photo received!</Text>
+                      <Text style={styles.qrWaitingSubtext}>
+                        Your photo has been received from your mobile device.
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <ActivityIndicator size="small" color="#086A74" />
+                      <Text style={styles.qrWaitingText}>Waiting for photos...</Text>
+                      <Text style={styles.qrWaitingSubtext}>
+                        Once you{'\u2019'}ve taken your photos on your mobile device, they{'\u2019'}ll appear here automatically.
+                      </Text>
+                    </>
+                  )}
                 </View>
 
                 <PIPPButton text="Cancel" onPress={handleCloseQrModal} variant="secondary" />
@@ -1639,6 +1847,103 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#575D84',
     textAlign: 'center',
+  } as any,
+  qrReceivedIcon: {
+    width: 32,
+    height: 32,
+    tintColor: '#007D42',
+  } as any,
+  // Captured photo success state
+  capturedDropzone: {
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    alignSelf: 'stretch',
+    borderRadius: 8,
+    backgroundColor: '#F0FAF4',
+    borderWidth: 1,
+    borderColor: '#007D42',
+  } as any,
+  capturedThumbnail: {
+    width: 64,
+    height: 64,
+    borderRadius: 6,
+    objectFit: 'cover',
+    flexShrink: 0,
+  } as any,
+  capturedInfo: {
+    flex: 1,
+    flexDirection: 'column',
+    gap: 8,
+  } as any,
+  capturedCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  } as any,
+  capturedCheckIcon: {
+    width: 18,
+    height: 18,
+    tintColor: '#007D42',
+  } as any,
+  capturedText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 22,
+    color: '#007D42',
+  } as any,
+  retakeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 40,
+    borderWidth: 1,
+    borderColor: '#07073D',
+    backgroundColor: '#FFFFFF',
+    alignSelf: 'flex-start',
+    cursor: 'pointer',
+  } as any,
+  retakeButtonText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 20,
+    color: '#07073D',
+  } as any,
+  // Camera page styles
+  cameraPageContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  } as any,
+  cameraStateContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+    maxWidth: 320,
+  } as any,
+  cameraStateHeading: {
+    fontFamily: pippTheme.fontFamily.heading,
+    fontSize: 24,
+    fontWeight: '600',
+    lineHeight: 32,
+    color: '#07073D',
+    textAlign: 'center',
+  } as any,
+  cameraStateSubtext: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+    color: '#575D84',
+    textAlign: 'center',
+  } as any,
+  cameraSuccessIcon: {
+    width: 48,
+    height: 48,
+    tintColor: '#007D42',
   } as any,
 });
 
