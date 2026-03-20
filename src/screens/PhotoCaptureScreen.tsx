@@ -158,7 +158,6 @@ const PhotoCaptureScreen: React.FC = () => {
           <View style={styles.cameraPageCenter}>
             {cameraPageState === 'ready' && (
               <View style={styles.cameraStateContainer}>
-                <Text style={styles.cameraEmoji}>📸</Text>
                 <Text style={styles.cameraStateHeading}>Take your photo</Text>
                 <Text style={styles.cameraStateSubtext}>Tap the button below to open your camera and take a photo.</Text>
               </View>
@@ -1976,9 +1975,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     tintColor: '#007D42',
-  } as any,
-  cameraEmoji: {
-    fontSize: 48,
   } as any,
 });
 
