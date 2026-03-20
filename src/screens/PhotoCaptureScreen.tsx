@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, Image, StyleSheet, SafeAreaView, ScrollView, Modal, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import { pippTheme } from '../theme/pipp';
 import PIPPButton from '../components/PIPPButton';
+import { QRCodeSVG } from 'qrcode.react';
+
+const isMobileOrTablet = (): boolean => {
+  if (typeof window === 'undefined' || !window.navigator) return false;
+  const ua = navigator.userAgent || navigator.vendor || (window as any).opera || '';
+  return /android|iphone|ipad|ipod|webos|blackberry|windows phone|opera mini|iemobile|mobile/i.test(ua)
+    || (navigator.maxTouchPoints > 0 && /Macintosh/i.test(ua));
+};
 
 const getDeliveryDateRange = () => {
   const today = new Date();
@@ -26,6 +34,45 @@ const PhotoCaptureScreen: React.FC = () => {
   const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
   const [pressedBtn, setPressedBtn] = useState<string | null>(null);
   const isUploadPage = window.location.pathname.startsWith('/photo-capture/upload');
+
+  const isMobile = isMobileOrTablet();
+
+  // QR modal state (desktop)
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [modalMounted, setModalMounted] = useState(false);
+  const slideAnim = useRef(new Animated.Value(600)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Hidden file input refs (mobile)
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  React.useEffect(() => {
+    if (qrModalVisible) {
+      setModalMounted(true);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start(() => {
+        Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+      });
+    } else if (modalMounted) {
+      Animated.timing(slideAnim, { toValue: 600, duration: 300, useNativeDriver: true }).start(() => {
+        Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {
+          setModalMounted(false);
+        });
+      });
+    }
+  }, [qrModalVisible]);
+
+  const handleUploadButtonPress = (buttonId: string) => {
+    if (isMobile) {
+      const input = fileInputRefs.current[buttonId];
+      if (input) input.click();
+    } else {
+      setQrModalVisible(true);
+    }
+  };
+
+  const handleCloseQrModal = () => {
+    setQrModalVisible(false);
+  };
 
   if (isUploadPage) {
     return (
@@ -157,9 +204,13 @@ const PhotoCaptureScreen: React.FC = () => {
                   onMouseLeave={() => setHoveredBtn(null)}
                   onMouseDown={() => setPressedBtn('selectPhotoId')}
                   onMouseUp={() => setPressedBtn(null)}
+                  {...{ onClick: () => handleUploadButtonPress('selectPhotoId') } as any}
                 >
-                  <Text style={styles.secondaryButtonText}>Select photo ID</Text>
+                  <Text style={styles.secondaryButtonText}>{isMobile ? 'Take photo ID' : 'Select photo ID'}</Text>
                 </View>
+                {isMobile && (
+                  <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectPhotoId'] = el; }} style={{ display: 'none' }} onChange={(e) => { if (e.target) e.target.value = ''; }} />
+                )}
               </View>
 
               <View style={styles.uploadDivider} />
@@ -215,9 +266,13 @@ const PhotoCaptureScreen: React.FC = () => {
                     onMouseLeave={() => setHoveredBtn(null)}
                     onMouseDown={() => setPressedBtn('selectFront')}
                     onMouseUp={() => setPressedBtn(null)}
+                    {...{ onClick: () => handleUploadButtonPress('selectFront') } as any}
                   >
-                    <Text style={styles.secondaryButtonText}>Select front-facing photo</Text>
+                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take front-facing photo' : 'Select front-facing photo'}</Text>
                   </View>
+                  {isMobile && (
+                    <input type="file" accept="image/*" capture="user" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { if (e.target) e.target.value = ''; }} />
+                  )}
                 </View>
               </View>
 
@@ -270,9 +325,13 @@ const PhotoCaptureScreen: React.FC = () => {
                   onMouseLeave={() => setHoveredBtn(null)}
                   onMouseDown={() => setPressedBtn('selectSide')}
                   onMouseUp={() => setPressedBtn(null)}
+                  {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
                 >
-                  <Text style={styles.secondaryButtonText}>Select side-on photo</Text>
+                  <Text style={styles.secondaryButtonText}>{isMobile ? 'Take side-on photo' : 'Select side-on photo'}</Text>
                 </View>
+                {isMobile && (
+                  <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { if (e.target) e.target.value = ''; }} />
+                )}
               </View>
 
               <View style={styles.uploadDivider} />
@@ -323,13 +382,63 @@ const PhotoCaptureScreen: React.FC = () => {
                   onMouseLeave={() => setHoveredBtn(null)}
                   onMouseDown={() => setPressedBtn('selectWeight')}
                   onMouseUp={() => setPressedBtn(null)}
+                  {...{ onClick: () => handleUploadButtonPress('selectWeight') } as any}
                 >
-                  <Text style={styles.secondaryButtonText}>Select weight reading photo</Text>
+                  <Text style={styles.secondaryButtonText}>{isMobile ? 'Take weight reading photo' : 'Select weight reading photo'}</Text>
                 </View>
+                {isMobile && (
+                  <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { if (e.target) e.target.value = ''; }} />
+                )}
               </View>
             </View>
           </ScrollView>
         </SafeAreaView>
+
+        {/* QR Code Modal for Desktop */}
+        {modalMounted && (
+          <View style={styles.qrOverlay}>
+            <Animated.View style={[styles.qrOverlayBg, { opacity: fadeAnim }]}>
+              <View style={styles.qrOverlayTouchable} {...{ onClick: handleCloseQrModal } as any} />
+            </Animated.View>
+            <Animated.View style={[styles.qrModalContainer, { transform: [{ translateY: slideAnim }] }]}>
+              <View style={styles.qrModalInner}>
+                <View style={styles.qrModalHeader}>
+                  <Text style={styles.qrModalHeading}>Take photos on your mobile</Text>
+                  <View style={styles.qrCloseButton} {...{ onClick: handleCloseQrModal } as any} accessibilityRole="button">
+                    <Image source={require('../theme/icons/close.svg')} style={styles.qrCloseIcon} resizeMode="contain" />
+                  </View>
+                </View>
+
+                <View style={styles.qrCodeSection}>
+                  <View style={styles.qrCodeWrapper}>
+                    <QRCodeSVG
+                      value={`${window.location.origin}/photo-capture/upload`}
+                      size={180}
+                      level="M"
+                      bgColor="#FFFFFF"
+                      fgColor="#07073D"
+                    />
+                  </View>
+                  <Text style={styles.qrInstructionText}>
+                    Scan this QR code with your phone camera to open the upload page and take your photos directly.
+                  </Text>
+                </View>
+
+                <View style={styles.qrDivider} />
+
+                <View style={styles.qrWaitingSection}>
+                  <ActivityIndicator size="small" color="#086A74" />
+                  <Text style={styles.qrWaitingText}>Waiting for photos...</Text>
+                  <Text style={styles.qrWaitingSubtext}>
+                    Once you{'\u2019'}ve taken your photos on your mobile device, they{'\u2019'}ll appear here automatically.
+                  </Text>
+                </View>
+
+                <PIPPButton text="Cancel" onPress={handleCloseQrModal} variant="secondary" />
+              </View>
+            </Animated.View>
+          </View>
+        )}
       </View>
     );
   }
@@ -1417,6 +1526,119 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     tintColor: '#BB292A',
+  } as any,
+  // QR Code Modal styles
+  qrOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 100,
+    justifyContent: 'flex-end',
+  } as any,
+  qrOverlayBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.64)',
+  } as any,
+  qrOverlayTouchable: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    cursor: 'pointer',
+  } as any,
+  qrModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    width: '100%',
+  } as any,
+  qrModalInner: {
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    gap: 24,
+    maxWidth: 780,
+    width: '100%',
+    alignSelf: 'center',
+  } as any,
+  qrModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  } as any,
+  qrModalHeading: {
+    fontFamily: pippTheme.fontFamily.heading,
+    fontSize: 24,
+    fontWeight: '600',
+    lineHeight: 32,
+    color: '#07073D',
+    flex: 1,
+  } as any,
+  qrCloseButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+  } as any,
+  qrCloseIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#07073D',
+  } as any,
+  qrCodeSection: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 16,
+  } as any,
+  qrCodeWrapper: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E6E7ED',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as any,
+  qrInstructionText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 22,
+    color: '#2F345F',
+    textAlign: 'center',
+  } as any,
+  qrDivider: {
+    height: 1,
+    alignSelf: 'stretch',
+    backgroundColor: '#DEE6E1',
+  } as any,
+  qrWaitingSection: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 16,
+  } as any,
+  qrWaitingText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
+    color: '#07073D',
+  } as any,
+  qrWaitingSubtext: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 22,
+    color: '#575D84',
+    textAlign: 'center',
   } as any,
 });
 
