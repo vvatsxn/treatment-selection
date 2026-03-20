@@ -70,8 +70,11 @@ const PhotoCaptureScreen: React.FC = () => {
   React.useEffect(() => {
     if (!qrModalVisible) return;
     const channel = new BroadcastChannel('photo-capture');
-    channel.onmessage = () => {
+    channel.onmessage = (event) => {
       setPhotoReceived(true);
+      if (event.data?.dataUrl) {
+        setCapturedPhotos(prev => ({ ...prev, ['qrPhoto']: event.data.dataUrl }));
+      }
     };
     return () => channel.close();
   }, [qrModalVisible]);
@@ -121,10 +124,15 @@ const PhotoCaptureScreen: React.FC = () => {
       const file = e.target.files?.[0];
       if (file) {
         setCameraPageState('success');
-        // Notify desktop tab via BroadcastChannel
-        const channel = new BroadcastChannel('photo-capture');
-        channel.postMessage({ type: 'photo-captured' });
-        channel.close();
+        // Read file and send data URL to desktop via BroadcastChannel
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const dataUrl = ev.target?.result as string;
+          const channel = new BroadcastChannel('photo-capture');
+          channel.postMessage({ type: 'photo-captured', dataUrl });
+          channel.close();
+        };
+        reader.readAsDataURL(file);
       }
     };
 
@@ -138,31 +146,32 @@ const PhotoCaptureScreen: React.FC = () => {
           </View>
         </View>
         <View style={styles.cameraPageContent}>
-          {cameraPageState === 'loading' && (
-            <View style={styles.cameraStateContainer}>
-              <ActivityIndicator size="large" color="#086A74" />
-              <Text style={styles.cameraStateHeading}>Opening camera...</Text>
-              <Text style={styles.cameraStateSubtext}>Please allow camera access when prompted.</Text>
-            </View>
-          )}
-          {cameraPageState === 'ready' && (
-            <View style={styles.cameraStateContainer}>
-              <ActivityIndicator size="large" color="#086A74" />
-              <Text style={styles.cameraStateHeading}>Take your photo</Text>
-              <Text style={styles.cameraStateSubtext}>Your camera should open automatically. If not, tap the button below.</Text>
-              <View
-                style={[styles.secondaryButton, { marginTop: 16, alignSelf: 'center' }]}
-                {...{ onClick: () => { if (cameraInputRef.current) cameraInputRef.current.click(); } } as any}
-              >
-                <Text style={styles.secondaryButtonText}>Open camera</Text>
+          <View style={styles.cameraPageCenter}>
+            {cameraPageState === 'loading' && (
+              <View style={styles.cameraStateContainer}>
+                <ActivityIndicator size="large" color="#086A74" />
+                <Text style={styles.cameraStateHeading}>Opening camera...</Text>
+                <Text style={styles.cameraStateSubtext}>Please allow camera access when prompted.</Text>
               </View>
-            </View>
-          )}
-          {cameraPageState === 'success' && (
-            <View style={styles.cameraStateContainer}>
-              <Image source={require('../theme/icons/check_circle.svg')} style={styles.cameraSuccessIcon} resizeMode="contain" />
-              <Text style={styles.cameraStateHeading}>Photo sent!</Text>
-              <Text style={styles.cameraStateSubtext}>You can now return to your desktop to continue.</Text>
+            )}
+            {cameraPageState === 'ready' && (
+              <View style={styles.cameraStateContainer}>
+                <ActivityIndicator size="large" color="#086A74" />
+                <Text style={styles.cameraStateHeading}>Take your photo</Text>
+                <Text style={styles.cameraStateSubtext}>Your camera should open automatically. If not, tap the button below.</Text>
+              </View>
+            )}
+            {cameraPageState === 'success' && (
+              <View style={styles.cameraStateContainer}>
+                <Image source={require('../theme/icons/check_circle.svg')} style={styles.cameraSuccessIcon} resizeMode="contain" />
+                <Text style={styles.cameraStateHeading}>Photo sent!</Text>
+                <Text style={styles.cameraStateSubtext}>You can now return to your desktop to continue.</Text>
+              </View>
+            )}
+          </View>
+          {cameraPageState === 'ready' && (
+            <View style={styles.cameraPageFooter}>
+              <PIPPButton text="Open camera" onPress={() => { if (cameraInputRef.current) cameraInputRef.current.click(); }} />
             </View>
           )}
           <input
@@ -625,6 +634,9 @@ const PhotoCaptureScreen: React.FC = () => {
                 <View style={styles.qrWaitingSection}>
                   {photoReceived ? (
                     <>
+                      {capturedPhotos['qrPhoto'] && (
+                        <img src={capturedPhotos['qrPhoto']} style={styles.qrReceivedThumbnail as any} />
+                      )}
                       <Image source={require('../theme/icons/check_circle.svg')} style={styles.qrReceivedIcon} resizeMode="contain" />
                       <Text style={styles.qrWaitingText}>Photo received!</Text>
                       <Text style={styles.qrWaitingSubtext}>
@@ -1853,6 +1865,12 @@ const styles = StyleSheet.create({
     height: 32,
     tintColor: '#007D42',
   } as any,
+  qrReceivedThumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    objectFit: 'cover',
+  } as any,
   // Captured photo success state
   capturedDropzone: {
     padding: 16,
@@ -1874,7 +1892,9 @@ const styles = StyleSheet.create({
   } as any,
   capturedInfo: {
     flex: 1,
-    flexDirection: 'column',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 8,
   } as any,
   capturedCheckRow: {
@@ -1914,9 +1934,17 @@ const styles = StyleSheet.create({
   // Camera page styles
   cameraPageContent: {
     flex: 1,
+    flexDirection: 'column',
+    padding: 20,
+  } as any,
+  cameraPageCenter: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+  } as any,
+  cameraPageFooter: {
+    paddingVertical: 16,
+    alignSelf: 'stretch',
   } as any,
   cameraStateContainer: {
     flexDirection: 'column',
