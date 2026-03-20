@@ -47,6 +47,10 @@ const PhotoCaptureScreen: React.FC = () => {
   const [cameraPageState, setCameraPageState] = useState<'loading' | 'ready' | 'success'>('loading');
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Session ID for cross-device QR flow
+  const sessionIdRef = useRef<string>(Math.random().toString(36).substring(2, 10));
+  const cameraSessionId = new URLSearchParams(window.location.search).get('session');
+
   // QR modal state (desktop)
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [modalMounted, setModalMounted] = useState(false);
@@ -66,38 +70,26 @@ const PhotoCaptureScreen: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // Simulate photo received on desktop after delay (cross-device can't use BroadcastChannel)
+  // Desktop: poll API for photos when QR modal is open
   React.useEffect(() => {
     if (!qrModalVisible) return;
-    // Try BroadcastChannel for same-browser demo
-    let channel: BroadcastChannel | null = null;
-    try {
-      channel = new BroadcastChannel('photo-capture');
-      channel.onmessage = (event) => {
-        setPhotoReceived(true);
-        if (event.data?.dataUrl) {
-          setCapturedPhotos(prev => ({ ...prev, ['qrPhoto']: event.data.dataUrl }));
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/photo?session=${sessionIdRef.current}`);
+        const data = await res.json();
+        if (data.found && data.dataUrl) {
+          setPhotoReceived(true);
+          setCapturedPhotos(prev => ({ ...prev, ['qrPhoto']: data.dataUrl }));
+          clearInterval(interval);
         }
-      };
-    } catch (e) { /* BroadcastChannel not supported */ }
-    // Also simulate after 10s for cross-device demo
-    const timer = setTimeout(() => {
-      setPhotoReceived(true);
-    }, 10000);
-    return () => {
-      if (channel) channel.close();
-      clearTimeout(timer);
-    };
+      } catch (e) { /* ignore polling errors */ }
+    }, 2000);
+    return () => clearInterval(interval);
   }, [qrModalVisible]);
 
-  // Camera page: auto-trigger camera after brief loading
+  // Camera page: skip straight to ready (programmatic .click() blocked on mobile)
   React.useEffect(() => {
-    if (!isCameraPage) return;
-    const timer = setTimeout(() => {
-      setCameraPageState('ready');
-      if (cameraInputRef.current) cameraInputRef.current.click();
-    }, 800);
-    return () => clearTimeout(timer);
+    if (isCameraPage) setCameraPageState('ready');
   }, [isCameraPage]);
 
   React.useEffect(() => {
@@ -135,13 +127,19 @@ const PhotoCaptureScreen: React.FC = () => {
       const file = e.target.files?.[0];
       if (file) {
         setCameraPageState('success');
-        // Read file and send data URL to desktop via BroadcastChannel
+        // Read file and POST to API for desktop to pick up
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = async (ev) => {
           const dataUrl = ev.target?.result as string;
-          const channel = new BroadcastChannel('photo-capture');
-          channel.postMessage({ type: 'photo-captured', dataUrl });
-          channel.close();
+          if (cameraSessionId) {
+            try {
+              await fetch(`/api/photo?session=${cameraSessionId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dataUrl }),
+              });
+            } catch (err) { /* ignore */ }
+          }
         };
         reader.readAsDataURL(file);
       }
@@ -158,18 +156,11 @@ const PhotoCaptureScreen: React.FC = () => {
         </View>
         <View style={styles.cameraPageContent}>
           <View style={styles.cameraPageCenter}>
-            {cameraPageState === 'loading' && (
-              <View style={styles.cameraStateContainer}>
-                <ActivityIndicator size="large" color="#086A74" />
-                <Text style={styles.cameraStateHeading}>Opening camera...</Text>
-                <Text style={styles.cameraStateSubtext}>Please allow camera access when prompted.</Text>
-              </View>
-            )}
             {cameraPageState === 'ready' && (
               <View style={styles.cameraStateContainer}>
-                <ActivityIndicator size="large" color="#086A74" />
+                <Text style={styles.cameraEmoji}>📸</Text>
                 <Text style={styles.cameraStateHeading}>Take your photo</Text>
-                <Text style={styles.cameraStateSubtext}>Your camera should open automatically. If not, tap the button below.</Text>
+                <Text style={styles.cameraStateSubtext}>Tap the button below to open your camera and take a photo.</Text>
               </View>
             )}
             {cameraPageState === 'success' && (
@@ -628,7 +619,7 @@ const PhotoCaptureScreen: React.FC = () => {
                 <View style={styles.qrCodeSection}>
                   <View style={styles.qrCodeWrapper}>
                     <QRCodeSVG
-                      value={`${window.location.origin}/photo-capture/camera`}
+                      value={`${window.location.origin}/photo-capture/camera?session=${sessionIdRef.current}`}
                       size={180}
                       level="M"
                       bgColor="#FFFFFF"
@@ -1985,6 +1976,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     tintColor: '#007D42',
+  } as any,
+  cameraEmoji: {
+    fontSize: 48,
   } as any,
 });
 
