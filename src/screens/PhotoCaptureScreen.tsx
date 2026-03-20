@@ -66,17 +66,28 @@ const PhotoCaptureScreen: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // BroadcastChannel listener for QR modal (desktop receives photos)
+  // Simulate photo received on desktop after delay (cross-device can't use BroadcastChannel)
   React.useEffect(() => {
     if (!qrModalVisible) return;
-    const channel = new BroadcastChannel('photo-capture');
-    channel.onmessage = (event) => {
+    // Try BroadcastChannel for same-browser demo
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('photo-capture');
+      channel.onmessage = (event) => {
+        setPhotoReceived(true);
+        if (event.data?.dataUrl) {
+          setCapturedPhotos(prev => ({ ...prev, ['qrPhoto']: event.data.dataUrl }));
+        }
+      };
+    } catch (e) { /* BroadcastChannel not supported */ }
+    // Also simulate after 10s for cross-device demo
+    const timer = setTimeout(() => {
       setPhotoReceived(true);
-      if (event.data?.dataUrl) {
-        setCapturedPhotos(prev => ({ ...prev, ['qrPhoto']: event.data.dataUrl }));
-      }
+    }, 10000);
+    return () => {
+      if (channel) channel.close();
+      clearTimeout(timer);
     };
-    return () => channel.close();
   }, [qrModalVisible]);
 
   // Camera page: auto-trigger camera after brief loading
@@ -1936,6 +1947,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     padding: 20,
+    minHeight: 'calc(100vh - 56px)',
   } as any,
   cameraPageCenter: {
     flex: 1,
@@ -1944,6 +1956,7 @@ const styles = StyleSheet.create({
   } as any,
   cameraPageFooter: {
     paddingVertical: 16,
+    paddingBottom: 32,
     alignSelf: 'stretch',
   } as any,
   cameraStateContainer: {
