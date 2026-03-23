@@ -22,18 +22,14 @@ module.exports = async (req, res) => {
   const key = `photo:${sessionId}`;
 
   if (req.method === 'POST') {
-    let body = '';
-    req.on('data', (chunk) => { body += chunk; });
-    req.on('end', async () => {
-      try {
-        const data = JSON.parse(body);
-        // Store with 5-minute expiry
-        await redis.set(key, data.dataUrl, { ex: 300 });
-        return res.status(200).json({ ok: true });
-      } catch (e) {
-        return res.status(400).json({ error: 'Failed to store photo' });
-      }
-    });
+    try {
+      const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      // Store with 5-minute expiry
+      await redis.set(key, data.dataUrl, { ex: 300 });
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      return res.status(400).json({ error: 'Failed to store photo' });
+    }
   } else if (req.method === 'GET') {
     try {
       const dataUrl = await redis.get(key);

@@ -148,25 +148,43 @@ const PhotoCaptureScreen: React.FC = () => {
 
   // Camera page (opened via QR code scan)
   if (isCameraPage) {
-    const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const compressImage = (file: File, maxDim: number, quality: number): Promise<string> => {
+      return new Promise((resolve) => {
+        const img = new window.Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+            else { width = Math.round(width * maxDim / height); height = maxDim; }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = url;
+      });
+    };
+
+    const handleCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
         setCameraPageState('success');
-        // Read file and POST to API for desktop to pick up
-        const reader = new FileReader();
-        reader.onload = async (ev) => {
-          const dataUrl = ev.target?.result as string;
-          if (cameraSessionId) {
-            try {
-              await fetch(`/api/photo?session=${cameraSessionId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dataUrl }),
-              });
-            } catch (err) { /* ignore */ }
-          }
-        };
-        reader.readAsDataURL(file);
+        if (cameraSessionId) {
+          try {
+            // Compress to max 400px, 0.6 quality to stay under Redis size limits
+            const compressedDataUrl = await compressImage(file, 400, 0.6);
+            await fetch(`/api/photo?session=${cameraSessionId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ dataUrl: compressedDataUrl }),
+            });
+          } catch (err) { /* ignore */ }
+        }
       }
     };
 
