@@ -706,12 +706,7 @@ const PhotoCaptureScreen: React.FC = () => {
             </Animated.View>
             <Animated.View style={[styles.qrModalContainer, { transform: [{ translateY: submitSlideAnim }] }]}>
               <View style={styles.qrModalInner}>
-                <View style={styles.qrModalHeader}>
-                  <Text style={styles.submitModalHeading}>Before you submit your photos</Text>
-                  <View style={styles.qrCloseButton} {...{ onClick: handleCloseSubmitModal } as any} accessibilityRole="button">
-                    <Image source={require('../theme/icons/close.svg')} style={styles.qrCloseIcon} resizeMode="contain" />
-                  </View>
-                </View>
+                <Text style={styles.submitModalHeading}>Before you submit your photos</Text>
 
                 <Text style={styles.submitModalBody}>
                   To avoid delays, please make sure you{'\u2019'}ve uploaded everything currently required for your order.
@@ -2140,25 +2135,27 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   } as any,
   submitChecklistCard: {
-    padding: 16,
+    padding: 12,
     flexDirection: 'column',
-    gap: 12,
+    alignItems: 'flex-start',
+    gap: 16,
     alignSelf: 'stretch',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E6E7ED',
-    borderStyle: 'dashed',
+    backgroundColor: '#F9F9F9',
+    backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='8' ry='8' stroke='%23E6E7ED' stroke-width='1' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e")`,
   } as any,
   submitChecklistLabel: {
     fontFamily: pippTheme.fontFamily.body,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    lineHeight: 22,
-    color: '#575D84',
+    lineHeight: 24,
+    color: '#2F345F',
+    alignSelf: 'flex-start',
   } as any,
   submitChecklistItems: {
     flexDirection: 'column',
     gap: 8,
+    alignSelf: 'stretch',
   } as any,
   submitChecklistRow: {
     flexDirection: 'row',
@@ -2177,9 +2174,9 @@ const styles = StyleSheet.create({
   } as any,
   submitChecklistText: {
     fontFamily: pippTheme.fontFamily.body,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '400',
-    lineHeight: 24,
+    lineHeight: 22,
     color: '#07073D',
   } as any,
   submitInfoBanner: {
