@@ -57,6 +57,12 @@ const PhotoCaptureScreen: React.FC = () => {
   const slideAnim = useRef(new Animated.Value(600)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Submit confirmation modal state
+  const [submitModalVisible, setSubmitModalVisible] = useState(false);
+  const [submitModalMounted, setSubmitModalMounted] = useState(false);
+  const submitSlideAnim = useRef(new Animated.Value(600)).current;
+  const submitFadeAnim = useRef(new Animated.Value(0)).current;
+
   // Hidden file input refs (mobile)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -106,6 +112,25 @@ const PhotoCaptureScreen: React.FC = () => {
       });
     }
   }, [qrModalVisible]);
+
+  React.useEffect(() => {
+    if (submitModalVisible) {
+      setSubmitModalMounted(true);
+      Animated.timing(submitFadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start(() => {
+        Animated.timing(submitSlideAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+      });
+    } else if (submitModalMounted) {
+      Animated.timing(submitSlideAnim, { toValue: 600, duration: 300, useNativeDriver: true }).start(() => {
+        Animated.timing(submitFadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {
+          setSubmitModalMounted(false);
+        });
+      });
+    }
+  }, [submitModalVisible]);
+
+  const handleCloseSubmitModal = () => {
+    setSubmitModalVisible(false);
+  };
 
   const handleUploadButtonPress = (buttonId: string) => {
     if (isMobile) {
@@ -596,6 +621,18 @@ const PhotoCaptureScreen: React.FC = () => {
                   )}
                 </View>
               )}
+
+              <View style={styles.uploadDivider} />
+
+              <View style={styles.warningBanner}>
+                <Text style={styles.warningBannerText}>
+                  Any edited, filtered or AI-generated photos will result in your order being <Text style={styles.warningBannerBold}>rejected</Text> and future requests declined.
+                </Text>
+              </View>
+
+              <PIPPButton text="Complete upload" onPress={() => setSubmitModalVisible(true)} />
+
+              <View style={styles.uploadBottomSpacer} />
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -656,6 +693,93 @@ const PhotoCaptureScreen: React.FC = () => {
                 </View>
 
                 <PIPPButton text="Cancel" onPress={handleCloseQrModal} variant="secondary" />
+              </View>
+            </Animated.View>
+          </View>
+        )}
+
+        {/* Submit Confirmation Modal */}
+        {submitModalMounted && (
+          <View style={styles.qrOverlay}>
+            <Animated.View style={[styles.qrOverlayBg, { opacity: submitFadeAnim }]}>
+              <View style={styles.qrOverlayTouchable} {...{ onClick: handleCloseSubmitModal } as any} />
+            </Animated.View>
+            <Animated.View style={[styles.qrModalContainer, { transform: [{ translateY: submitSlideAnim }] }]}>
+              <View style={styles.qrModalInner}>
+                <View style={styles.qrModalHeader}>
+                  <Text style={styles.submitModalHeading}>Before you submit your photos</Text>
+                  <View style={styles.qrCloseButton} {...{ onClick: handleCloseSubmitModal } as any} accessibilityRole="button">
+                    <Image source={require('../theme/icons/close.svg')} style={styles.qrCloseIcon} resizeMode="contain" />
+                  </View>
+                </View>
+
+                <Text style={styles.submitModalBody}>
+                  To avoid delays, please make sure you{'\u2019'}ve uploaded everything currently required for your order.
+                </Text>
+
+                {/* Checklist card */}
+                <View style={styles.submitChecklistCard}>
+                  <Text style={styles.submitChecklistLabel}>First time upload</Text>
+                  <View style={styles.submitChecklistItems}>
+                    <View style={styles.submitChecklistRow}>
+                      <Image
+                        source={capturedPhotos['selectPhotoId'] ? require('../theme/icons/check_circle.svg') : require('../theme/icons/close.svg')}
+                        style={[styles.submitChecklistIcon, capturedPhotos['selectPhotoId'] ? styles.submitChecklistIconGreen : styles.submitChecklistIconRed]}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.submitChecklistText}>Photo ID</Text>
+                    </View>
+                    <View style={styles.submitChecklistRow}>
+                      <Image
+                        source={capturedPhotos['selectFront'] ? require('../theme/icons/check_circle.svg') : require('../theme/icons/close.svg')}
+                        style={[styles.submitChecklistIcon, capturedPhotos['selectFront'] ? styles.submitChecklistIconGreen : styles.submitChecklistIconRed]}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.submitChecklistText}>Front-facing photo</Text>
+                    </View>
+                    <View style={styles.submitChecklistRow}>
+                      <Image
+                        source={capturedPhotos['selectSide'] ? require('../theme/icons/check_circle.svg') : require('../theme/icons/close.svg')}
+                        style={[styles.submitChecklistIcon, capturedPhotos['selectSide'] ? styles.submitChecklistIconGreen : styles.submitChecklistIconRed]}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.submitChecklistText}>Side-on photo</Text>
+                    </View>
+                    <View style={styles.submitChecklistRow}>
+                      <Image
+                        source={capturedPhotos['selectWeight'] ? require('../theme/icons/check_circle.svg') : require('../theme/icons/close.svg')}
+                        style={[styles.submitChecklistIcon, capturedPhotos['selectWeight'] ? styles.submitChecklistIconGreen : styles.submitChecklistIconRed]}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.submitChecklistText}>Weight reading</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Info banner */}
+                <View style={styles.submitInfoBanner}>
+                  <Image source={require('../theme/icons/info-outline.svg')} style={styles.submitInfoIcon} resizeMode="contain" />
+                  <View style={styles.submitInfoTextWrap}>
+                    <Text style={styles.submitInfoHeading}>If your order was put on hold</Text>
+                    <Text style={styles.submitInfoBody}>
+                      Check your email for details on which additional photos are needed and upload them before submitting.
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Action buttons */}
+                <View style={styles.submitButtonsWrap}>
+                  <PIPPButton text="Submit photos for review" onPress={() => { setSubmitModalVisible(false); }} />
+                  <View
+                    style={[styles.submitGoBackButton, hoveredBtn === 'goBackReview' && styles.secondaryButtonHover]}
+                    onMouseEnter={() => setHoveredBtn('goBackReview')}
+                    onMouseLeave={() => setHoveredBtn(null)}
+                    {...{ onClick: handleCloseSubmitModal } as any}
+                  >
+                    <Image source={require('../theme/icons/arrow-back.svg')} style={styles.submitGoBackIcon} resizeMode="contain" />
+                    <Text style={styles.secondaryButtonText}>Go back and review uploads</Text>
+                  </View>
+                </View>
               </View>
             </Animated.View>
           </View>
@@ -1975,6 +2099,149 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     tintColor: '#007D42',
+  } as any,
+  uploadBottomSpacer: {
+    height: 16,
+  } as any,
+  warningBanner: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 16,
+    alignSelf: 'stretch',
+    backgroundColor: '#FEF3E0',
+    padding: 16,
+    borderRadius: 8,
+  } as any,
+  warningBannerText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+    color: '#07073D',
+  } as any,
+  warningBannerBold: {
+    fontWeight: '600',
+  } as any,
+  // Submit confirmation modal styles
+  submitModalHeading: {
+    fontFamily: pippTheme.fontFamily.heading,
+    fontSize: 24,
+    fontWeight: '600',
+    lineHeight: 32,
+    color: '#07073D',
+    flex: 1,
+  } as any,
+  submitModalBody: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+    color: '#07073D',
+    alignSelf: 'stretch',
+  } as any,
+  submitChecklistCard: {
+    padding: 16,
+    flexDirection: 'column',
+    gap: 12,
+    alignSelf: 'stretch',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E6E7ED',
+    borderStyle: 'dashed',
+  } as any,
+  submitChecklistLabel: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 22,
+    color: '#575D84',
+  } as any,
+  submitChecklistItems: {
+    flexDirection: 'column',
+    gap: 8,
+  } as any,
+  submitChecklistRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  } as any,
+  submitChecklistIcon: {
+    width: 20,
+    height: 20,
+  } as any,
+  submitChecklistIconGreen: {
+    tintColor: '#007D42',
+  } as any,
+  submitChecklistIconRed: {
+    tintColor: '#BB292A',
+  } as any,
+  submitChecklistText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+    color: '#07073D',
+  } as any,
+  submitInfoBanner: {
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    alignSelf: 'stretch',
+    borderRadius: 4,
+    backgroundColor: '#E9EEFA',
+  } as any,
+  submitInfoIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#003D88',
+    flexShrink: 0,
+  } as any,
+  submitInfoTextWrap: {
+    flex: 1,
+    flexDirection: 'column',
+    gap: 4,
+  } as any,
+  submitInfoHeading: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 22,
+    color: '#07073D',
+  } as any,
+  submitInfoBody: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 22,
+    color: '#07073D',
+  } as any,
+  submitButtonsWrap: {
+    flexDirection: 'column',
+    gap: 12,
+    alignSelf: 'stretch',
+  } as any,
+  submitGoBackButton: {
+    height: 48,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingLeft: 24,
+    paddingRight: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'stretch',
+    borderRadius: 40,
+    borderWidth: 1,
+    borderColor: '#07073D',
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    cursor: 'pointer',
+  } as any,
+  submitGoBackIcon: {
+    width: 16,
+    height: 16,
+    tintColor: '#07073D',
   } as any,
 });
 
