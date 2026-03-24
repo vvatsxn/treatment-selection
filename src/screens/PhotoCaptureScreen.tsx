@@ -73,6 +73,8 @@ const PhotoCaptureScreen: React.FC = () => {
   const [selectedTimer, setSelectedTimer] = useState<number>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [capturedFrame, setCapturedFrame] = useState<string | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [maxZoom, setMaxZoom] = useState<number>(1);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -145,13 +147,29 @@ const PhotoCaptureScreen: React.FC = () => {
     try {
       stopCameraStream();
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode },
+        video: {
+          facingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
         audio: false,
       });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play().catch(() => {});
+      }
+      // Detect native zoom support
+      const track = stream.getVideoTracks()[0];
+      if (track) {
+        const capabilities = track.getCapabilities?.() as any;
+        if (capabilities?.zoom) {
+          setMaxZoom(Math.min(capabilities.zoom.max, 10));
+          setZoomLevel(capabilities.zoom.min || 1);
+        } else {
+          setMaxZoom(1);
+          setZoomLevel(1);
+        }
       }
     } catch (err) {
       // getUserMedia failed (no HTTPS, permission denied, etc.) -- fall back to native file input
@@ -255,6 +273,17 @@ const PhotoCaptureScreen: React.FC = () => {
     setCapturedFrame(null);
     setCameraButtonId(null);
     setCountdown(null);
+    setZoomLevel(1);
+  };
+
+  // Handle zoom change
+  const handleZoomChange = (newZoom: number) => {
+    setZoomLevel(newZoom);
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (track) {
+      const constraints = { advanced: [{ zoom: newZoom } as any] };
+      track.applyConstraints(constraints).catch(() => {});
+    }
   };
 
   const handleCloseSubmitModal = () => {
@@ -981,6 +1010,25 @@ const PhotoCaptureScreen: React.FC = () => {
                       </View>
                     ))}
                   </View>
+                  {maxZoom > 1 && (
+                    <View style={styles.zoomRow}>
+                      <Text style={styles.zoomLabel}>1x</Text>
+                      <input
+                        type="range"
+                        min="1"
+                        max={maxZoom}
+                        step="0.1"
+                        value={zoomLevel}
+                        onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
+                        style={{
+                          flex: 1,
+                          height: 28,
+                          accentColor: '#FFFFFF',
+                        }}
+                      />
+                      <Text style={styles.zoomLabel}>{maxZoom.toFixed(0)}x</Text>
+                    </View>
+                  )}
                   <View style={styles.captureButtonOuter} {...{ onClick: handleCapturePress } as any}>
                     <View style={styles.captureButtonInner} />
                   </View>
@@ -2570,6 +2618,22 @@ const styles = StyleSheet.create({
   } as any,
   timerButtonTextActive: {
     color: '#07073D',
+  } as any,
+  zoomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    width: '100%',
+    paddingHorizontal: 32,
+    marginBottom: 20,
+  } as any,
+  zoomLabel: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    minWidth: 24,
+    textAlign: 'center',
   } as any,
   captureButtonOuter: {
     width: 72,
