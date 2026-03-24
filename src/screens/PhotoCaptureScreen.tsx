@@ -442,9 +442,10 @@ const PhotoCaptureScreen: React.FC = () => {
           <View style={styles.uploadHeaderRow}>
             <View
               style={styles.uploadBackButton}
-              onTouchEnd={() => {
-                window.history.back();
-              }}
+              {...{ onClick: () => {
+                window.history.pushState({}, '', '/photo-capture');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              } } as any}
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
