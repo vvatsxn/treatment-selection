@@ -75,6 +75,8 @@ const PhotoCaptureScreen: React.FC = () => {
   const [capturedFrame, setCapturedFrame] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [maxZoom, setMaxZoom] = useState<number>(1);
+  const [timerMenuOpen, setTimerMenuOpen] = useState(false);
+  const [zoomPanelOpen, setZoomPanelOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -217,7 +219,13 @@ const PhotoCaptureScreen: React.FC = () => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
-    ctx?.drawImage(video, 0, 0);
+    if (!ctx) return;
+    // Flip capture for front camera to match the un-mirrored preview
+    if (cameraFacingMode === 'user') {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(video, 0, 0);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
     setCapturedFrame(dataUrl);
     stopCameraStream();
@@ -274,6 +282,8 @@ const PhotoCaptureScreen: React.FC = () => {
     setCameraButtonId(null);
     setCountdown(null);
     setZoomLevel(1);
+    setTimerMenuOpen(false);
+    setZoomPanelOpen(false);
   };
 
   // Handle zoom change
@@ -288,6 +298,39 @@ const PhotoCaptureScreen: React.FC = () => {
 
   const handleCloseSubmitModal = () => {
     setSubmitModalVisible(false);
+  };
+
+  // Camera guide overlay for each photo type
+  const renderCameraGuide = () => {
+    if (!cameraButtonId) return null;
+
+    const guideImages: Record<string, { src: any; style: React.CSSProperties }> = {
+      selectPhotoId: {
+        src: require('../images/id-guide.svg'),
+        style: { width: '90%', maxWidth: 380, opacity: 0.9 },
+      },
+      selectFront: {
+        src: require('../images/front-facing-guide.svg'),
+        style: { height: '100%', opacity: 0.9 },
+      },
+      selectSide: {
+        src: require('../images/side-profile-guide.svg'),
+        style: { height: '100%', opacity: 0.9 },
+      },
+      selectWeight: {
+        src: require('../images/scale-guide.svg'),
+        style: { height: '100%', maxWidth: '90%', objectFit: 'contain' as const, opacity: 0.9 },
+      },
+    };
+
+    const guide = guideImages[cameraButtonId];
+    if (!guide) return null;
+
+    return (
+      <View style={styles.cameraGuideContainer}>
+        <img src={guide.src} style={guide.style} alt="" />
+      </View>
+    );
   };
 
   const handleUploadButtonPress = (buttonId: string) => {
@@ -976,15 +1019,31 @@ const PhotoCaptureScreen: React.FC = () => {
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover' as any,
+                    transform: cameraFacingMode === 'user' ? 'scaleX(-1)' : 'none',
                   }}
                 />
                 <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-                {/* Top controls */}
+                {/* Camera guide overlay */}
+                {renderCameraGuide()}
+
+                {/* Top controls + guide instruction */}
                 <View style={styles.cameraTopBar}>
                   <View style={styles.cameraTopButton} {...{ onClick: handleCloseCamera } as any}>
                     <Image source={require('../theme/icons/close.svg')} style={styles.cameraTopIcon} resizeMode="contain" />
                   </View>
+                  {cameraButtonId && (
+                    <View style={styles.cameraTopTextWrap}>
+                      <View style={styles.cameraTopTextBg}>
+                        <Text style={styles.cameraTopText}>
+                          {cameraButtonId === 'selectPhotoId' ? 'Position your ID within the frame'
+                            : cameraButtonId === 'selectFront' ? 'Stand facing the camera — full body'
+                            : cameraButtonId === 'selectSide' ? 'Turn sideways — full body'
+                            : 'Point camera at your scales'}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                   <View style={styles.cameraTopButton} {...{ onClick: () => setCameraFacingMode(prev => prev === 'environment' ? 'user' : 'environment') } as any}>
                     <Image source={require('../theme/icons/swap.svg')} style={styles.cameraTopIcon} resizeMode="contain" />
                   </View>
@@ -997,40 +1056,92 @@ const PhotoCaptureScreen: React.FC = () => {
                   </View>
                 )}
 
-                {/* Bottom controls */}
-                <View style={styles.cameraBottomBar}>
-                  <View style={styles.timerRow}>
-                    {[3, 5, 10].map(t => (
+                {/* Zoom horizontal slider — above bottom controls */}
+                {zoomPanelOpen && maxZoom > 1 && (
+                  <View style={styles.zoomPanel}>
+                    <Text style={styles.zoomPanelLabel}>1x</Text>
+                    <input
+                      type="range"
+                      min="1"
+                      max={maxZoom}
+                      step="0.1"
+                      value={zoomLevel}
+                      onChange={(e: any) => handleZoomChange(parseFloat(e.target.value))}
+                      style={{
+                        flex: 1,
+                        height: 44,
+                        accentColor: '#1a1a1a',
+                        cursor: 'pointer',
+                      } as any}
+                    />
+                    <Text style={styles.zoomPanelLabel}>{maxZoom.toFixed(0)}x</Text>
+                  </View>
+                )}
+
+                {/* Dismiss backdrop — tap anywhere outside to close menus */}
+                {(timerMenuOpen || zoomPanelOpen) && (
+                  <View style={styles.menuDismissBackdrop} {...{ onClick: () => { setTimerMenuOpen(false); setZoomPanelOpen(false); } } as any} />
+                )}
+
+                {/* Timer popup menu — Apple-style scale animation, centered above timer button */}
+                <div style={{
+                  position: 'absolute' as const,
+                  bottom: 104,
+                  right: '25%',
+                  zIndex: 15,
+                  transformOrigin: 'bottom center',
+                  transform: timerMenuOpen ? 'translateX(50%) scale(1)' : 'translateX(50%) scale(0.01)',
+                  opacity: timerMenuOpen ? 1 : 0,
+                  transition: 'transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.18s ease',
+                  pointerEvents: timerMenuOpen ? 'auto' as const : 'none' as const,
+                }}>
+                  <View style={styles.timerPopup}>
+                    {[0, 3, 5, 10].map(t => (
                       <View
                         key={t}
-                        style={[styles.timerButton, selectedTimer === t && styles.timerButtonActive]}
-                        {...{ onClick: () => setSelectedTimer(prev => prev === t ? 0 : t) } as any}
+                        style={[styles.timerPopupItem, selectedTimer === t && styles.timerPopupItemActive]}
+                        {...{ onClick: (e: any) => { e.stopPropagation(); setSelectedTimer(t); setTimerMenuOpen(false); } } as any}
                       >
-                        <Text style={[styles.timerButtonText, selectedTimer === t && styles.timerButtonTextActive]}>{t}s</Text>
+                        <Text style={[styles.timerPopupText, selectedTimer === t && styles.timerPopupTextActive]}>
+                          {t === 0 ? 'Off' : `${t}s`}
+                        </Text>
                       </View>
                     ))}
                   </View>
-                  {maxZoom > 1 && (
-                    <View style={styles.zoomRow}>
-                      <Text style={styles.zoomLabel}>1x</Text>
-                      <input
-                        type="range"
-                        min="1"
-                        max={maxZoom}
-                        step="0.1"
-                        value={zoomLevel}
-                        onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
-                        style={{
-                          flex: 1,
-                          height: 28,
-                          accentColor: '#FFFFFF',
-                        }}
-                      />
-                      <Text style={styles.zoomLabel}>{maxZoom.toFixed(0)}x</Text>
+                </div>
+
+                {/* Bottom controls */}
+                <View style={styles.cameraBottomBar}>
+                  <View style={styles.cameraControlsRow}>
+                    {/* Zoom toggle — left */}
+                    {maxZoom > 1 ? (
+                      <View style={styles.cameraControlCol}>
+                        <View
+                          style={[styles.cameraControlButton, zoomPanelOpen && styles.cameraControlButtonActive]}
+                          {...{ onClick: () => { setZoomPanelOpen(prev => !prev); setTimerMenuOpen(false); } } as any}
+                        >
+                          <Text style={[styles.cameraControlButtonText, zoomPanelOpen && styles.cameraControlButtonTextActive]}>{zoomLevel.toFixed(1)}x</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={styles.cameraControlCol} />
+                    )}
+
+                    {/* Capture button — center */}
+                    <View style={styles.captureButtonOuter} {...{ onClick: () => { setTimerMenuOpen(false); setZoomPanelOpen(false); handleCapturePress(); } } as any}>
+                      <View style={styles.captureButtonInner} />
                     </View>
-                  )}
-                  <View style={styles.captureButtonOuter} {...{ onClick: handleCapturePress } as any}>
-                    <View style={styles.captureButtonInner} />
+
+                    {/* Timer toggle — right */}
+                    <View style={styles.cameraControlCol}>
+                      <View
+                        style={[styles.cameraControlButton, timerMenuOpen && styles.cameraControlButtonActive]}
+                        {...{ onClick: () => { setTimerMenuOpen(prev => !prev); setZoomPanelOpen(false); } } as any}
+                      >
+                        <img src={require('../theme/icons/clock.svg')} style={{ width: 18, height: 18, filter: timerMenuOpen ? 'brightness(0)' : 'brightness(0) invert(1)' }} alt="" />
+                        {selectedTimer > 0 && <Text style={[styles.cameraControlButtonText, timerMenuOpen && styles.cameraControlButtonTextActive]}>{selectedTimer}s</Text>}
+                      </View>
+                    </View>
                   </View>
                 </View>
               </>
@@ -2544,9 +2655,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 56,
-    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingHorizontal: 12,
     zIndex: 10,
+  } as any,
+  cameraTopTextWrap: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  } as any,
+  cameraTopTextBg: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  } as any,
+  cameraTopText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    textAlign: 'center',
   } as any,
   cameraTopButton: {
     width: 44,
@@ -2581,59 +2710,134 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   } as any,
+  // Camera guide overlay styles
+  cameraGuideContainer: {
+    position: 'absolute',
+    top: 56,
+    left: 0,
+    right: 0,
+    bottom: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 3,
+    pointerEvents: 'none',
+  } as any,
+
   cameraBottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingBottom: 48,
+    paddingBottom: 40,
     zIndex: 10,
   } as any,
-  timerRow: {
+  cameraControlsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 32,
   } as any,
-  timerButton: {
-    height: 36,
-    paddingHorizontal: 16,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    backgroundColor: 'transparent',
+  cameraControlCol: {
+    flex: 1,
+    alignItems: 'center',
+  } as any,
+  cameraControlButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     cursor: 'pointer',
+    flexDirection: 'row',
+    gap: 2,
   } as any,
-  timerButtonActive: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FFFFFF',
+  cameraControlButtonActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   } as any,
-  timerButtonText: {
+  cameraControlButtonText: {
     fontFamily: pippTheme.fontFamily.body,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     color: '#FFFFFF',
   } as any,
-  timerButtonTextActive: {
+  cameraControlButtonTextActive: {
     color: '#07073D',
   } as any,
-  zoomRow: {
+  cameraControlIcon: {
+    width: 18,
+    height: 18,
+    tintColor: '#FFFFFF',
+  } as any,
+  cameraControlIconActive: {
+    tintColor: '#07073D',
+  } as any,
+
+  // Dismiss backdrop for timer/zoom menus
+  menuDismissBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 12,
+  } as any,
+
+  // Timer popup (visual only — positioning handled by wrapper div)
+  timerPopup: {
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: 14,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
+  } as any,
+  timerPopupItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    alignItems: 'center',
+    cursor: 'pointer',
+  } as any,
+  timerPopupItemActive: {
+    backgroundColor: 'rgba(0, 0, 0, 0.07)',
+  } as any,
+  timerPopupText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'rgba(0, 0, 0, 0.35)',
+  } as any,
+  timerPopupTextActive: {
+    color: '#000000',
+  } as any,
+
+  // Zoom panel — horizontal above bottom controls
+  zoomPanel: {
+    position: 'absolute',
+    bottom: 116,
+    left: 24,
+    right: 24,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    width: '100%',
-    paddingHorizontal: 32,
-    marginBottom: 20,
+    zIndex: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
   } as any,
-  zoomLabel: {
+  zoomPanelLabel: {
     fontFamily: pippTheme.fontFamily.body,
     fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    minWidth: 24,
-    textAlign: 'center',
+    fontWeight: '700',
+    color: '#1a1a1a',
   } as any,
   captureButtonOuter: {
     width: 72,
