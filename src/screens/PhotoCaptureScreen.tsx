@@ -66,6 +66,18 @@ const PhotoCaptureScreen: React.FC = () => {
   // Hidden file input refs (mobile)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
+  // Custom in-app camera state
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraButtonId, setCameraButtonId] = useState<string | null>(null);
+  const [cameraFacingMode, setCameraFacingMode] = useState<'environment' | 'user'>('environment');
+  const [selectedTimer, setSelectedTimer] = useState<number>(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [capturedFrame, setCapturedFrame] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Handle file capture from input
   const handleFileCapture = (buttonId: string, file: File) => {
     const reader = new FileReader();
@@ -128,14 +140,134 @@ const PhotoCaptureScreen: React.FC = () => {
     }
   }, [submitModalVisible]);
 
+  // Camera lifecycle: start/stop stream
+  const startCameraStream = async (facingMode: 'environment' | 'user') => {
+    try {
+      stopCameraStream();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
+    } catch (err) {
+      // getUserMedia failed (no HTTPS, permission denied, etc.) -- fall back to native file input
+      setCameraActive(false);
+      if (cameraButtonId) {
+        const input = fileInputRefs.current[cameraButtonId];
+        if (input) input.click();
+      }
+    }
+  };
+
+  const stopCameraStream = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+  };
+
+  // Use callback ref to start stream once video element is in the DOM
+  const videoCallbackRef = (el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    if (el && cameraActive && !capturedFrame && !streamRef.current) {
+      startCameraStream(cameraFacingMode);
+    }
+  };
+
+  // Cleanup on unmount or camera close
+  React.useEffect(() => {
+    return () => {
+      stopCameraStream();
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, []);
+
+  // Handle facingMode change while camera is active
+  React.useEffect(() => {
+    if (cameraActive && !capturedFrame && videoRef.current) {
+      startCameraStream(cameraFacingMode);
+    }
+  }, [cameraFacingMode]);
+
+  // Capture a frame from the video
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    setCapturedFrame(dataUrl);
+    stopCameraStream();
+  };
+
+  // Handle capture button press (with optional timer)
+  const handleCapturePress = () => {
+    if (countdown !== null) {
+      // Cancel active countdown
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      setCountdown(null);
+      return;
+    }
+    if (selectedTimer === 0) {
+      capturePhoto();
+    } else {
+      setCountdown(selectedTimer);
+      countdownRef.current = setInterval(() => {
+        setCountdown(prev => {
+          if (prev === null || prev <= 1) {
+            if (countdownRef.current) clearInterval(countdownRef.current);
+            countdownRef.current = null;
+            capturePhoto();
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  };
+
+  // Use captured photo
+  const handleUsePhoto = () => {
+    if (capturedFrame && cameraButtonId) {
+      setCapturedPhotos(prev => ({ ...prev, [cameraButtonId]: capturedFrame }));
+    }
+    setCameraActive(false);
+    setCapturedFrame(null);
+    setCameraButtonId(null);
+  };
+
+  // Retake photo
+  const handleRetake = () => {
+    setCapturedFrame(null);
+    startCameraStream(cameraFacingMode);
+  };
+
+  // Close camera
+  const handleCloseCamera = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    stopCameraStream();
+    setCameraActive(false);
+    setCapturedFrame(null);
+    setCameraButtonId(null);
+    setCountdown(null);
+  };
+
   const handleCloseSubmitModal = () => {
     setSubmitModalVisible(false);
   };
 
   const handleUploadButtonPress = (buttonId: string) => {
     if (isMobile) {
-      const input = fileInputRefs.current[buttonId];
-      if (input) input.click();
+      setCameraButtonId(buttonId);
+      setCameraActive(true);
+      setCapturedFrame(null);
+      setCountdown(null);
+      setSelectedTimer(0);
     } else {
       setQrModalVisible(true);
     }
@@ -457,7 +589,7 @@ const PhotoCaptureScreen: React.FC = () => {
                       </View>
                     </View>
                     {isMobile && (
-                      <input type="file" accept="image/*" capture="user" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectFront', file); if (e.target) e.target.value = ''; }} />
+                      <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectFront', file); if (e.target) e.target.value = ''; }} />
                     )}
                   </View>
                 ) : (
@@ -473,7 +605,7 @@ const PhotoCaptureScreen: React.FC = () => {
                       <Text style={styles.secondaryButtonText}>{isMobile ? 'Take front-facing photo' : 'Select front-facing photo'}</Text>
                     </View>
                     {isMobile && (
-                      <input type="file" accept="image/*" capture="user" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectFront', file); if (e.target) e.target.value = ''; }} />
+                      <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectFront', file); if (e.target) e.target.value = ''; }} />
                     )}
                   </View>
                 )}
@@ -795,6 +927,93 @@ const PhotoCaptureScreen: React.FC = () => {
                 </View>
               </View>
             </Animated.View>
+          </View>
+        )}
+
+        {/* Custom In-App Camera */}
+        {cameraActive && (
+          <View style={styles.cameraOverlay}>
+            {capturedFrame === null ? (
+              <>
+                <video
+                  ref={videoCallbackRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  style={{
+                    position: 'absolute' as any,
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover' as any,
+                  }}
+                />
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+                {/* Top controls */}
+                <View style={styles.cameraTopBar}>
+                  <View style={styles.cameraTopButton} {...{ onClick: handleCloseCamera } as any}>
+                    <Image source={require('../theme/icons/close.svg')} style={styles.cameraTopIcon} resizeMode="contain" />
+                  </View>
+                  <View style={styles.cameraTopButton} {...{ onClick: () => setCameraFacingMode(prev => prev === 'environment' ? 'user' : 'environment') } as any}>
+                    <Image source={require('../theme/icons/swap.svg')} style={styles.cameraTopIcon} resizeMode="contain" />
+                  </View>
+                </View>
+
+                {/* Countdown overlay */}
+                {countdown !== null && (
+                  <View style={styles.countdownOverlay}>
+                    <Text style={styles.countdownText}>{countdown}</Text>
+                  </View>
+                )}
+
+                {/* Bottom controls */}
+                <View style={styles.cameraBottomBar}>
+                  <View style={styles.timerRow}>
+                    {[3, 5, 10].map(t => (
+                      <View
+                        key={t}
+                        style={[styles.timerButton, selectedTimer === t && styles.timerButtonActive]}
+                        {...{ onClick: () => setSelectedTimer(prev => prev === t ? 0 : t) } as any}
+                      >
+                        <Text style={[styles.timerButtonText, selectedTimer === t && styles.timerButtonTextActive]}>{t}s</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <View style={styles.captureButtonOuter} {...{ onClick: handleCapturePress } as any}>
+                    <View style={styles.captureButtonInner} />
+                  </View>
+                </View>
+              </>
+            ) : (
+              <>
+                <img
+                  src={capturedFrame}
+                  style={{
+                    position: 'absolute' as any,
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover' as any,
+                  }}
+                />
+                <View style={styles.reviewBottomBar}>
+                  <View style={styles.reviewButtonsRow}>
+                    <View
+                      style={styles.reviewRetakeButton}
+                      {...{ onClick: handleRetake } as any}
+                    >
+                      <Text style={styles.reviewRetakeText}>Retake</Text>
+                    </View>
+                    <View style={styles.reviewUseButtonWrap}>
+                      <PIPPButton text="Use photo" onPress={handleUsePhoto} />
+                    </View>
+                  </View>
+                </View>
+              </>
+            )}
           </View>
         )}
       </View>
@@ -2257,6 +2476,150 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     tintColor: '#07073D',
+  } as any,
+
+  // Custom in-app camera styles
+  cameraOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 200,
+    backgroundColor: '#000000',
+  } as any,
+  cameraTopBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 56,
+    paddingHorizontal: 20,
+    zIndex: 10,
+  } as any,
+  cameraTopButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+  } as any,
+  cameraTopIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#FFFFFF',
+  } as any,
+  countdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+  } as any,
+  countdownText: {
+    fontFamily: pippTheme.fontFamily.heading,
+    fontSize: 96,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  } as any,
+  cameraBottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingBottom: 48,
+    zIndex: 10,
+  } as any,
+  timerRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  } as any,
+  timerButton: {
+    height: 36,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+  } as any,
+  timerButtonActive: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
+  } as any,
+  timerButtonText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  } as any,
+  timerButtonTextActive: {
+    color: '#07073D',
+  } as any,
+  captureButtonOuter: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+  } as any,
+  captureButtonInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+  } as any,
+  reviewBottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingBottom: 48,
+    zIndex: 10,
+  } as any,
+  reviewButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  } as any,
+  reviewRetakeButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 360,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+  } as any,
+  reviewRetakeText: {
+    fontFamily: pippTheme.fontFamily.button,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  } as any,
+  reviewUseButtonWrap: {
+    flex: 1,
   } as any,
 });
 
