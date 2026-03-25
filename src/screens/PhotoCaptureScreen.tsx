@@ -630,7 +630,6 @@ const PhotoCaptureScreen: React.FC = () => {
                         <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
                         <Text style={styles.acceptedIdText}>Clear and well lit</Text>
                       </View>
-                      <Text style={styles.notAcceptedLabel}>Avoid:</Text>
                       <View style={styles.acceptedIdRow}>
                         <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
                         <Text style={styles.acceptedIdText}>Include other people</Text>
@@ -712,7 +711,6 @@ const PhotoCaptureScreen: React.FC = () => {
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
                       <Text style={styles.acceptedIdText}>Clear and well lit</Text>
                     </View>
-                    <Text style={styles.notAcceptedLabel}>Avoid:</Text>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
                       <Text style={styles.acceptedIdText}>Include other people</Text>
@@ -796,7 +794,6 @@ const PhotoCaptureScreen: React.FC = () => {
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
                       <Text style={styles.acceptedIdText}>Clear and well lit</Text>
                     </View>
-                    <Text style={styles.notAcceptedLabel}>Avoid:</Text>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
                       <Text style={styles.acceptedIdText}>Blur or crop the display</Text>
