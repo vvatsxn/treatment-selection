@@ -590,7 +590,7 @@ const PhotoCaptureScreen: React.FC = () => {
                     onMouseUp={() => setPressedBtn(null)}
                     {...{ onClick: () => handleUploadButtonPress('selectPhotoId') } as any}
                   >
-                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take photo ID' : 'Select photo ID'}</Text>
+                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Capture photo ID' : 'Select photo ID'}</Text>
                   </View>
                   {isMobile && (
                     <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectPhotoId'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectPhotoId', file); if (e.target) e.target.value = ''; }} />
@@ -675,7 +675,7 @@ const PhotoCaptureScreen: React.FC = () => {
                       onMouseUp={() => setPressedBtn(null)}
                       {...{ onClick: () => handleUploadButtonPress('selectFront') } as any}
                     >
-                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Take front-facing photo' : 'Select front-facing photo'}</Text>
+                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Capture front-facing photo' : 'Select front-facing photo'}</Text>
                     </View>
                     {isMobile && (
                       <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectFront', file); if (e.target) e.target.value = ''; }} />
@@ -757,7 +757,7 @@ const PhotoCaptureScreen: React.FC = () => {
                     onMouseUp={() => setPressedBtn(null)}
                     {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
                   >
-                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take side-on photo' : 'Select side-on photo'}</Text>
+                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Capture side-on photo' : 'Select side-on photo'}</Text>
                   </View>
                   {isMobile && (
                     <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectSide', file); if (e.target) e.target.value = ''; }} />
@@ -837,7 +837,7 @@ const PhotoCaptureScreen: React.FC = () => {
                     onMouseUp={() => setPressedBtn(null)}
                     {...{ onClick: () => handleUploadButtonPress('selectWeight') } as any}
                   >
-                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take weight reading photo' : 'Select weight reading photo'}</Text>
+                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Capture weight reading photo' : 'Select weight reading photo'}</Text>
                   </View>
                   {isMobile && (
                     <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectWeight', file); if (e.target) e.target.value = ''; }} />
