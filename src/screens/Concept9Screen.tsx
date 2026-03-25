@@ -642,7 +642,8 @@ const Concept9Screen: React.FC = () => {
   const badgeFadeAnim = useRef(new Animated.Value(0)).current;
   const badgeSlideAnim = useRef(new Animated.Value(24)).current;
 
-  const STEP_PATHS = ['/treatment-selection-2', '/treatment-selection-2/treatment', '/treatment-selection-2/bundle', '/treatment-selection-2/plan', '/treatment-selection-2/consent'];
+  const basePath = window.location.pathname.startsWith('/concept-2') ? '/concept-2' : '/treatment-selection-2';
+  const STEP_PATHS = [basePath, `${basePath}/treatment`, `${basePath}/bundle`, `${basePath}/plan`, `${basePath}/consent`];
   const getStepFromPath = () => {
     const path = window.location.pathname;
     const idx = STEP_PATHS.findIndex((p, i) => i > 0 && path === p);

@@ -6,7 +6,7 @@ import PhotoCaptureScreen from './screens/PhotoCaptureScreen';
 
 const getRoute = () => {
   const path = window.location.pathname;
-  if (path.startsWith('/treatment-selection-2')) return 'treatment-selection-2';
+  if (path.startsWith('/treatment-selection-2') || path.startsWith('/concept-2')) return 'treatment-selection-2';
   if (path.startsWith('/photo-capture/camera')) return 'photo-capture-camera';
   if (path.startsWith('/photo-capture/upload')) return 'photo-capture-upload';
   if (path.startsWith('/photo-capture')) return 'photo-capture';
