@@ -548,10 +548,6 @@ const PhotoCaptureScreen: React.FC = () => {
                     <Text style={styles.notAcceptedLabel}>Not accepted:</Text>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Screenshots, photocopies, or expired documents</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
                       <Text style={styles.acceptedIdText}>Work badges or student cards</Text>
                     </View>
                   </View>
@@ -630,14 +626,6 @@ const PhotoCaptureScreen: React.FC = () => {
                         <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
                         <Text style={styles.acceptedIdText}>Clear and well lit</Text>
                       </View>
-                      <View style={styles.acceptedIdRow}>
-                        <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
-                        <Text style={styles.acceptedIdText}>Include other people</Text>
-                      </View>
-                      <View style={styles.acceptedIdRow}>
-                        <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
-                        <Text style={styles.acceptedIdText}>Use holiday or social photos</Text>
-                      </View>
                     </View>
                   </View>
                 </View>
@@ -710,14 +698,6 @@ const PhotoCaptureScreen: React.FC = () => {
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
                       <Text style={styles.acceptedIdText}>Clear and well lit</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Include other people</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Use holiday or social photos</Text>
                     </View>
                   </View>
                 </View>
@@ -793,10 +773,6 @@ const PhotoCaptureScreen: React.FC = () => {
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
                       <Text style={styles.acceptedIdText}>Clear and well lit</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Blur or crop the display</Text>
                     </View>
                   </View>
                 </View>
