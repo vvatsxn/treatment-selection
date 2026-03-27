@@ -1471,39 +1471,30 @@ const Concept9Screen: React.FC = () => {
         </View>
 
         {/* Checkbox */}
-        <TouchableOpacity
-          onPress={() => setConsentChecked(!consentChecked)}
-          style={styles.checkboxRow}
-          activeOpacity={0.7}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: consentChecked }}
-          accessibilityLabel="I have read and agree to the above information"
-        >
-          <View
-            style={[
-              styles.checkbox,
-              consentChecked && styles.checkboxChecked,
-            ]}
+        <View style={styles.checkboxFrame}>
+          <TouchableOpacity
+            onPress={() => setConsentChecked(!consentChecked)}
+            style={styles.checkboxRow}
+            activeOpacity={0.7}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: consentChecked }}
+            accessibilityLabel="I have read and agree to the above information"
           >
-            {consentChecked && (
-              <Text style={styles.checkboxTick}>✓</Text>
-            )}
-          </View>
-          <Text style={styles.checkboxLabel}>
-            I have read and agree to the above information
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.ctaContainer}>
-        <PIPPButton
-          text="Confirm and continue"
-          onPress={() => {}}
-          disabled={!consentChecked}
-        />
-        <Text style={styles.footerText}>
-          Your order will be reviewed by our clinical team within 24 hours.
-        </Text>
+            <View
+              style={[
+                styles.checkbox,
+                consentChecked && styles.checkboxChecked,
+              ]}
+            >
+              {consentChecked && (
+                <Text style={styles.checkboxTick}>✓</Text>
+              )}
+            </View>
+            <Text style={styles.checkboxLabel}>
+              I have read and agree to the above information
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -1530,7 +1521,7 @@ const Concept9Screen: React.FC = () => {
         ref={scrollViewRef}
         nativeID="c9-scroll"
         style={styles.scrollView}
-        contentContainerStyle={step === 0 ? styles.scrollContentFixed : step === 3 ? [styles.scrollContent, { paddingBottom: 80 }] : styles.scrollContent}
+        contentContainerStyle={step === 0 ? styles.scrollContentFixed : (step === 3 || step === 4) ? [styles.scrollContent, { paddingBottom: 100 }] : styles.scrollContent}
         showsVerticalScrollIndicator={false}
         scrollEnabled
       >
@@ -1551,6 +1542,18 @@ const Concept9Screen: React.FC = () => {
             onPress={() => goTo(4)}
             disabled={!selectedPlanGoal}
           />
+        </View>
+      )}
+      {step === 4 && (
+        <View style={styles.stickyFooter}>
+          <PIPPButton
+            text="Confirm and continue"
+            onPress={() => {}}
+            disabled={!consentChecked}
+          />
+          <Text style={styles.footerText}>
+            Your order will be reviewed by our clinical team within 24 hours.
+          </Text>
         </View>
       )}
       <PricingModal
@@ -2801,6 +2804,13 @@ const styles = StyleSheet.create({
     lineHeight: C9.lineHeight.caption,
     marginTop: -8,
   },
+  checkboxFrame: {
+    backgroundColor: pippTheme.colors.background.secondary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  } as any,
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
