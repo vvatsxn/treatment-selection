@@ -1369,7 +1369,7 @@ const Concept9Screen: React.FC = () => {
 
         {/* Plan details header */}
         <View style={styles.goalDetailsHeader}>
-          <Text style={styles.goalDetailsTitle}>{bundleLabel} supplies</Text>
+          <Text style={styles.goalDetailsTitle}>{bundleLabel} supply</Text>
           <View style={styles.goalDetailsMedInfo}>
             <Text style={styles.goalDetailsMedName}>{med.fullName}</Text>
             <Text style={styles.goalDetailsMedDesc}>{med.description}</Text>
