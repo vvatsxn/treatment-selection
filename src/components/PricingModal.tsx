@@ -27,7 +27,7 @@ interface BrandPricing {
 const pricingByBrand: Record<string, BrandPricing> = {
   'mounjaro-kwikpen': {
     brandLabel: 'Mounjaro',
-    description: 'Your monthly dose rises gradually over your plan. Longer plans offer a lower price per pen — helping you save as your treatment progresses.',
+    description: 'Your monthly dose rises gradually over your plan. Longer supply lengths offer a lower price per pen — helping you save as your treatment progresses.',
     footnote: 'Each pen contains 4 weekly doses (one per week) and lasts 4 weeks. Prices shown are per pen per month.',
     columns: [
       { label: '1 Month', saving: '' },
@@ -45,7 +45,7 @@ const pricingByBrand: Record<string, BrandPricing> = {
   },
   'wegovy-flextouch': {
     brandLabel: 'Wegovy',
-    description: 'Your monthly dose rises gradually over your plan. Longer plans offer a lower price per pen — helping you save as your treatment progresses.',
+    description: 'Your monthly dose rises gradually over your plan. Longer supply lengths offer a lower price per pen — helping you save as your treatment progresses.',
     footnote: 'Each pen contains 4 weekly doses (one per week) and lasts 4 weeks. Prices shown are per pen per month.',
     columns: [
       { label: '1 Month', saving: '' },
@@ -62,7 +62,7 @@ const pricingByBrand: Record<string, BrandPricing> = {
   },
   'wegovy-pill': {
     brandLabel: 'Wegovy Pill',
-    description: 'Your monthly dose rises gradually over your plan. Longer plans offer a lower price per month — helping you save as your treatment progresses.',
+    description: 'Your monthly dose rises gradually over your plan. Longer supply lengths offer a lower price per month — helping you save as your treatment progresses.',
     footnote: 'Each month\'s supply contains a 4-week course of oral tablets. Prices shown are per month.',
     columns: [
       { label: '1 Month', saving: '' },
@@ -78,7 +78,7 @@ const pricingByBrand: Record<string, BrandPricing> = {
   },
   'orfoglipron': {
     brandLabel: 'Orfoglipron',
-    description: 'Your monthly dose rises gradually over your plan. Longer plans offer a lower price per month — helping you save as your treatment progresses.',
+    description: 'Your monthly dose rises gradually over your plan. Longer supply lengths offer a lower price per month — helping you save as your treatment progresses.',
     footnote: 'Each month\'s supply contains a 4-week course of oral tablets. Prices shown are per month.',
     columns: [
       { label: '1 Month', saving: '' },

@@ -1150,21 +1150,21 @@ const Concept9Screen: React.FC = () => {
     const tripleBundle = med.bundles.triple;
 
     const bundleOptions = [
-      { key: 'triple', bundle: tripleBundle, penCount: 3, title: '3 month plan from', badge: 'Best value',
+      { key: 'triple', bundle: tripleBundle, penCount: 3, title: '3 month supply from', badge: 'Best value',
         savingsPill: `Savings up to £${Math.floor((parseInt(tripleBundle.originalPrice!.replace('£','')) - tripleBundle.priceValue) / 3)} per pen`,
         bullets: [
           { bold: 'Price locked', rest: ' for 3 months' },
           { bold: '1 order, 1 delivery', rest: ' re-order every 3 months' },
         ],
         showKlarna: true },
-      { key: 'double', bundle: doubleBundle, penCount: 2, title: '2 month plan from', badge: 'Most popular',
+      { key: 'double', bundle: doubleBundle, penCount: 2, title: '2 month supply from', badge: 'Most popular',
         savingsPill: `Savings up to £${Math.floor((parseInt(doubleBundle.originalPrice!.replace('£','')) - doubleBundle.priceValue) / 2)} per pen`,
         bullets: [
           { bold: 'Price locked', rest: ' for 2 months' },
           { bold: '1 order, 1 delivery', rest: ' — re-order every 2 months' },
         ],
         showKlarna: false },
-      { key: 'single', bundle: singleBundle, penCount: 1, title: '1 month plan from', badge: null,
+      { key: 'single', bundle: singleBundle, penCount: 1, title: '1 month supply from', badge: null,
         savingsPill: null,
         bullets: [
           { bold: 'No price lock', rest: '' },
@@ -1369,7 +1369,7 @@ const Concept9Screen: React.FC = () => {
 
         {/* Plan details header */}
         <View style={styles.goalDetailsHeader}>
-          <Text style={styles.goalDetailsTitle}>{bundleLabel} plans</Text>
+          <Text style={styles.goalDetailsTitle}>{bundleLabel} supplies</Text>
           <View style={styles.goalDetailsMedInfo}>
             <Text style={styles.goalDetailsMedName}>{med.fullName}</Text>
             <Text style={styles.goalDetailsMedDesc}>{med.description}</Text>
@@ -1547,7 +1547,7 @@ const Concept9Screen: React.FC = () => {
       {step === 3 && (
         <View style={styles.stickyFooter}>
           <PIPPButton
-            text="Continue with plan"
+            text="Continue with supply"
             onPress={() => goTo(4)}
             disabled={!selectedPlanGoal}
           />
