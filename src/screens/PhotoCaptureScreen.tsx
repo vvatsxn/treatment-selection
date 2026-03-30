@@ -36,6 +36,7 @@ const PhotoCaptureScreen: React.FC = () => {
   const pathname = window.location.pathname;
   const isUploadPage = pathname.startsWith('/photo-capture/upload');
   const isCameraPage = pathname.startsWith('/photo-capture/camera');
+  const isBeforeYouStartPage = pathname.startsWith('/photo-capture/before-you-start');
 
   const isMobile = isMobileOrTablet();
 
@@ -429,6 +430,82 @@ const PhotoCaptureScreen: React.FC = () => {
             ref={cameraInputRef}
             style={{ display: 'none' }}
             onChange={handleCameraCapture}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  if (isBeforeYouStartPage) {
+    return (
+      <View style={bysStyles.outerContainer}>
+        {/* Top section */}
+        <View style={bysStyles.topSection}>
+          <Image
+            source={require('../images/phlo-clinic-logo-default.png')}
+            style={bysStyles.logo}
+            resizeMode="contain"
+            accessibilityLabel="Phlo Clinic logo"
+          />
+
+          <View style={bysStyles.contentGroup}>
+            <View style={bysStyles.iconCircle}>
+              <Image
+                source={require('../images/holding-phone.png')}
+                style={bysStyles.iconImage}
+                resizeMode="contain"
+              />
+            </View>
+
+            <Text style={bysStyles.heading}>Before you start</Text>
+            <Text style={bysStyles.body}>
+              You'll take <Text style={bysStyles.bodyBold}>four</Text> photos using your camera. We'll guide you through this.
+            </Text>
+
+            <View style={bysStyles.readyCard}>
+              <Text style={bysStyles.readyHeading}>Get these ready now</Text>
+              <View style={bysStyles.readyList}>
+                <Text style={bysStyles.readyItem}>{'\u2022'}  Your Photo ID</Text>
+                <Text style={bysStyles.readyItem}>{'\u2022'}  Your weighing scales</Text>
+                <Text style={bysStyles.readyItem}>{'\u2022'}  Lightweight clothes</Text>
+                <Text style={bysStyles.readyItem}>{'\u2022'}  Evidence of your last prescription</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={bysStyles.linkButton}
+              activeOpacity={0.7}
+              accessibilityRole="link"
+            >
+              <Text style={bysStyles.linkText}>What do I need?</Text>
+              <Image
+                source={require('../theme/icons/arrow-outward.svg')}
+                style={bysStyles.linkIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Bottom section — fixed to bottom */}
+        <View style={bysStyles.bottomSection}>
+          <Text style={bysStyles.bottomNote}>
+            You must take <Text style={bysStyles.bodyBold}>all</Text> photos at once
+          </Text>
+          <PIPPButton
+            text="I'm ready"
+            onPress={() => {
+              window.history.pushState({}, '', '/photo-capture/upload');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+          />
+          <PIPPButton
+            text="Come back when I'm ready"
+            variant="secondary"
+            onPress={() => {
+              window.history.pushState({}, '', '/photo-capture');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
           />
         </View>
       </View>
@@ -1236,7 +1313,7 @@ const PhotoCaptureScreen: React.FC = () => {
               <PIPPButton
                 text="Upload all photos"
                 onPress={() => {
-                  window.history.pushState({}, '', '/photo-capture/upload');
+                  window.history.pushState({}, '', '/photo-capture/before-you-start');
                   window.dispatchEvent(new PopStateEvent('popstate'));
                 }}
               />
@@ -2862,6 +2939,143 @@ const styles = StyleSheet.create({
   } as any,
   reviewUseButtonWrap: {
     flex: 1,
+  } as any,
+});
+
+const bysStyles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    height: '100dvh',
+    padding: 20,
+    paddingTop: 20,
+    paddingBottom: 0,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundImage: 'linear-gradient(180deg, #FFFFFF 0%, #F1F9FF 20%, #E3F3FF 50%, #DEF4F7 80%, #D0EEF2 100%)',
+    maxWidth: 780,
+    marginHorizontal: 'auto',
+    width: '100%',
+  } as any,
+  topSection: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 20,
+    alignSelf: 'stretch',
+  } as any,
+  logo: {
+    width: 120,
+    height: 28,
+  } as any,
+  contentGroup: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 20,
+    alignSelf: 'stretch',
+  } as any,
+  iconCircle: {
+    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 360,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.00)',
+    backgroundImage: 'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.40) 100%)',
+  } as any,
+  iconImage: {
+    width: 80,
+    height: 80,
+  } as any,
+  heading: {
+    fontFamily: pippTheme.fontFamily.heading,
+    fontSize: 32,
+    fontWeight: '600',
+    lineHeight: 40,
+    letterSpacing: -0.08,
+    color: pippTheme.colors.text.primary,
+    textAlign: 'center',
+  } as any,
+  body: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+    color: pippTheme.colors.text.primary,
+    textAlign: 'center',
+  } as any,
+  bodyBold: {
+    fontWeight: '700',
+  } as any,
+  readyCard: {
+    padding: 20,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 24,
+    alignSelf: 'stretch',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    backgroundImage: 'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.40) 100%)',
+  } as any,
+  readyHeading: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
+    color: pippTheme.colors.text.primary,
+  } as any,
+  readyList: {
+    flexDirection: 'column',
+    gap: 12,
+  } as any,
+  readyItem: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+    color: pippTheme.colors.text.primary,
+  } as any,
+  linkButton: {
+    flexDirection: 'row',
+    height: 48,
+    paddingVertical: 16,
+    paddingLeft: 24,
+    paddingRight: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  } as any,
+  linkText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
+    color: pippTheme.colors.text.link,
+    textDecorationLine: 'underline',
+    textAlign: 'center',
+  } as any,
+  linkIcon: {
+    width: 16,
+    height: 16,
+    tintColor: pippTheme.colors.text.link,
+  } as any,
+  bottomSection: {
+    width: '100%',
+    maxWidth: 375,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+  } as any,
+  bottomNote: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+    color: pippTheme.colors.text.primary,
+    textAlign: 'center',
   } as any,
 });
 

@@ -9,6 +9,7 @@ const getRoute = () => {
   if (path.startsWith('/treatment-selection-2') || path.startsWith('/concept-2')) return 'treatment-selection-2';
   if (path.startsWith('/photo-capture/camera')) return 'photo-capture-camera';
   if (path.startsWith('/photo-capture/upload')) return 'photo-capture-upload';
+  if (path.startsWith('/photo-capture/before-you-start')) return 'photo-capture-before-you-start';
   if (path.startsWith('/photo-capture')) return 'photo-capture';
   return 'treatment-selection-1';
 };
@@ -26,7 +27,7 @@ const App = () => {
     return <Concept9Screen />;
   }
 
-  if (route === 'photo-capture' || route === 'photo-capture-upload' || route === 'photo-capture-camera') {
+  if (route === 'photo-capture' || route === 'photo-capture-upload' || route === 'photo-capture-camera' || route === 'photo-capture-before-you-start') {
     return <PhotoCaptureScreen />;
   }
 
