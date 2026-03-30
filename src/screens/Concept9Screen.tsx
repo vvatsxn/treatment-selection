@@ -1734,7 +1734,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heroImageFrame: {
-    height: 394,
+    height: 'min(394px, calc(100vh - 370px))',
     paddingTop: 20,
     paddingRight: 12,
     paddingBottom: 20,
@@ -1748,7 +1748,7 @@ const styles = StyleSheet.create({
   } as any,
   heroFrameImage: {
     position: 'absolute',
-    bottom: -150,
+    bottom: 'clamp(-250px, calc(-150px - (667px - 100vh) * 0.5), -150px)',
     width: 120,
     height: 500,
   } as any,
