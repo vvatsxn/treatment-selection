@@ -30,13 +30,20 @@ const getDeliveryDateRange = () => {
   return `${start.getDate()} ${months[start.getMonth()]} \u2013 ${end.getDate()} ${months[end.getMonth()]}`;
 };
 
-const PhotoCaptureScreen: React.FC = () => {
+const PhotoCaptureScreen2: React.FC = () => {
   const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
   const [pressedBtn, setPressedBtn] = useState<string | null>(null);
-  const pathname = window.location.pathname;
-  const isUploadPage = pathname.startsWith('/photo-capture/upload');
-  const isCameraPage = pathname.startsWith('/photo-capture/camera');
-  const isBeforeYouStartPage = pathname.startsWith('/photo-capture/before-you-start');
+  const [pathname, setPathname] = useState(window.location.pathname);
+
+  React.useEffect(() => {
+    const handleNav = () => setPathname(window.location.pathname);
+    window.addEventListener('popstate', handleNav);
+    return () => window.removeEventListener('popstate', handleNav);
+  }, []);
+
+  const isUploadPage = pathname.startsWith('/photo-capture-2/upload');
+  const isCameraPage = pathname.startsWith('/photo-capture-2/camera');
+  const isBeforeYouStartPage = pathname.startsWith('/photo-capture-2/before-you-start');
 
   const isMobile = isMobileOrTablet();
 
@@ -82,6 +89,9 @@ const PhotoCaptureScreen: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Photo ID accordion state (change #3)
+  const [photoIdAccordionOpen, setPhotoIdAccordionOpen] = useState(false);
 
   // Handle file capture from input
   const handleFileCapture = (buttonId: string, file: File) => {
@@ -496,7 +506,7 @@ const PhotoCaptureScreen: React.FC = () => {
             <PIPPButton
               text="I'm ready"
               onPress={() => {
-                window.history.pushState({}, '', '/photo-capture/upload');
+                window.history.pushState({}, '', '/photo-capture-2/upload');
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }}
             />
@@ -504,7 +514,7 @@ const PhotoCaptureScreen: React.FC = () => {
               text="Come back when I'm ready"
               variant="secondary"
               onPress={() => {
-                window.history.pushState({}, '', '/photo-capture');
+                window.history.pushState({}, '', '/photo-capture-2');
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }}
             />
@@ -522,7 +532,7 @@ const PhotoCaptureScreen: React.FC = () => {
             <View
               style={styles.uploadBackButton}
               {...{ onClick: () => {
-                window.history.pushState({}, '', '/photo-capture');
+                window.history.pushState({}, '', '/photo-capture-2');
                 window.dispatchEvent(new PopStateEvent('popstate'));
               } } as any}
               accessibilityRole="button"
@@ -534,12 +544,7 @@ const PhotoCaptureScreen: React.FC = () => {
                 resizeMode="contain"
               />
             </View>
-            <Image
-              source={require('../images/phlo-clinic-logo-default.png')}
-              style={styles.headerLogo}
-              resizeMode="contain"
-              accessibilityLabel="Phlo Clinic logo"
-            />
+            <Text style={styles.uploadHeaderTitle}>Verify details</Text>
             <View style={styles.uploadBackPlaceholder} />
           </View>
         </View>
@@ -551,8 +556,10 @@ const PhotoCaptureScreen: React.FC = () => {
           >
             <View style={styles.uploadMainContent}>
               <View style={styles.uploadHeaderGroup}>
-                <Text style={styles.uploadHeadingLarge}>Upload your photos</Text>
-                <Text style={styles.uploadSubtext}>We need each type of photo below to verify your reported weight.</Text>
+                <Text style={styles.uploadHeadingLarge}>Take your photos</Text>
+                <Text style={styles.uploadSubtext}>
+                  Your clinician needs <Text style={styles.uploadSubtextBold}>four</Text> photos before they can prescribe.
+                </Text>
                 <View style={styles.uploadSecurityBox}>
                   <Image
                     source={require('../theme/icons/verified-user.svg')}
@@ -561,26 +568,20 @@ const PhotoCaptureScreen: React.FC = () => {
                   />
                   <View style={styles.uploadSecurityTextGroup}>
                     <Text style={styles.uploadSecurityTitle}>Your photos are stored securely</Text>
-                    <Text style={styles.uploadSecurityBody}>
-                      {'Encrypted and reviewed '}
-                      <Text style={styles.uploadSecurityBodyBold}>only</Text>
-                      {' by licensed clinicians. '}
-                      <Text style={styles.uploadSecurityBodyBold}>We delete Photo ID</Text>
-                      {' after 90 days.'}
-                    </Text>
+                    <Text style={styles.uploadSecurityBody}>Seen only by licensed clinicians.</Text>
+                    <Text style={styles.uploadSecurityBody}>Photo ID is deleted after 90 days.</Text>
                   </View>
                 </View>
+                <Text style={styles.supportLinkText}>
+                  {'Need help? '}
+                  <Text style={styles.supportLinkAnchor}>Contact us</Text>
+                </Text>
               </View>
               <View style={styles.uploadDivider} />
 
               {/* Photo ID section */}
               <View style={styles.photoIdSection}>
                 <Text style={styles.photoIdHeading}>Photo ID</Text>
-                <Text style={styles.photoIdBody}>
-                  {'We need '}
-                  <Text style={styles.photoIdBodyBold}>one</Text>
-                  {' clear photo of your ID to verify your identity, as required by clinical protocol.'}
-                </Text>
                 <View style={styles.photoIdExamplesWrap}>
                   <View style={styles.photoIdExamplesRow}>
                     <Image
@@ -598,11 +599,11 @@ const PhotoCaptureScreen: React.FC = () => {
                     <Text style={styles.acceptedIdLabel}>Accepted photo ID:</Text>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Valid passport (UK or any country)</Text>
+                      <Text style={styles.acceptedIdText}>Valid passport</Text>
                     </View>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Driving licence (UK or EEA, full or provisional)</Text>
+                      <Text style={styles.acceptedIdText}>Driving licence</Text>
                     </View>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
@@ -665,7 +666,7 @@ const PhotoCaptureScreen: React.FC = () => {
                     onMouseUp={() => setPressedBtn(null)}
                     {...{ onClick: () => handleUploadButtonPress('selectPhotoId') } as any}
                   >
-                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Capture photo ID' : 'Select photo ID'}</Text>
+                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take Photo ID' : 'Select Photo ID'}</Text>
                   </View>
                   {isMobile && (
                     <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectPhotoId'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectPhotoId', file); if (e.target) e.target.value = ''; }} />
@@ -675,23 +676,26 @@ const PhotoCaptureScreen: React.FC = () => {
 
               <View style={styles.uploadDivider} />
 
-              {/* Weight evidence section */}
+              {/* Body photos section */}
               <View style={styles.weightEvidenceSection}>
-                <Text style={styles.photoIdHeading}>Now upload: Weight evidence</Text>
+                <Text style={styles.photoIdHeading}>Body photos</Text>
 
                 {/* Front-facing photo */}
                 <View style={styles.weightSubsection}>
-                  <Text style={styles.weightSubsectionTitle}>1. Front-facing photo of yourself</Text>
+                  <Text style={styles.weightSubsectionTitle}>Front-facing photo of yourself</Text>
                   <View style={styles.weightContentRow}>
                     <img
                       src={require('../images/front-facing-img.jpg')}
                       style={styles.weightImgTag as any}
                     />
                     <View style={styles.acceptedIdList}>
-                      <Text style={styles.acceptedIdLabel}>Do:</Text>
                       <View style={styles.acceptedIdRow}>
                         <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                        <Text style={styles.acceptedIdText}>Include full body and face</Text>
+                        <Text style={styles.acceptedIdText}>Include your full body</Text>
+                      </View>
+                      <View style={styles.acceptedIdRow}>
+                        <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                        <Text style={styles.acceptedIdText}>Must show your <Text style={styles.photoIdBodyBold}>face</Text></Text>
                       </View>
                       <View style={styles.acceptedIdRow}>
                         <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
@@ -699,11 +703,12 @@ const PhotoCaptureScreen: React.FC = () => {
                       </View>
                       <View style={styles.acceptedIdRow}>
                         <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                        <Text style={styles.acceptedIdText}>Take the photo today</Text>
-                      </View>
-                      <View style={styles.acceptedIdRow}>
-                        <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
                         <Text style={styles.acceptedIdText}>Clear and well lit</Text>
+                      </View>
+                      <Text style={styles.notAcceptedLabel}>Don't:</Text>
+                      <View style={styles.acceptedIdRow}>
+                        <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
+                        <Text style={styles.acceptedIdText}>Include other people</Text>
                       </View>
                     </View>
                   </View>
@@ -733,6 +738,13 @@ const PhotoCaptureScreen: React.FC = () => {
                   </View>
                 ) : (
                   <View style={styles.uploadDropzone}>
+                    <View style={styles.selfieTipBox}>
+                      <View style={styles.selfieTipPill}><Text style={styles.selfieTipLabel}>Tip</Text></View>
+                      <Text style={styles.selfieTipText}>
+                        <Text style={styles.selfieTipBold}>Switch to selfie mode, then set the Timer.</Text>
+                        {'\n'}Place your phone somewhere stable.
+                      </Text>
+                    </View>
                     <View
                       style={[styles.secondaryButton, hoveredBtn === 'selectFront' && styles.secondaryButtonHover, pressedBtn === 'selectFront' && styles.secondaryButtonPressed]}
                       onMouseEnter={() => setHoveredBtn('selectFront')}
@@ -741,10 +753,93 @@ const PhotoCaptureScreen: React.FC = () => {
                       onMouseUp={() => setPressedBtn(null)}
                       {...{ onClick: () => handleUploadButtonPress('selectFront') } as any}
                     >
-                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Capture front-facing photo' : 'Select front-facing photo'}</Text>
+                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Take front-facing photo' : 'Select front-facing photo'}</Text>
                     </View>
                     {isMobile && (
                       <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectFront', file); if (e.target) e.target.value = ''; }} />
+                    )}
+                  </View>
+                )}
+
+                <View style={styles.uploadDivider} />
+
+                {/* Side-on photo */}
+                <View style={styles.weightSubsection}>
+                  <Text style={styles.weightSubsectionTitle}>Side-on photo of yourself</Text>
+                  <View style={styles.weightContentRow}>
+                    <img
+                      src={require('../images/side-profile-img.jpg')}
+                      style={styles.weightImgTag as any}
+                    />
+                    <View style={styles.acceptedIdList}>
+                      <View style={styles.acceptedIdRow}>
+                        <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                        <Text style={styles.acceptedIdText}>Include your full body</Text>
+                      </View>
+                      <View style={styles.acceptedIdRow}>
+                        <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                        <Text style={styles.acceptedIdText}>Must show your <Text style={styles.photoIdBodyBold}>face</Text></Text>
+                      </View>
+                      <View style={styles.acceptedIdRow}>
+                        <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                        <Text style={styles.acceptedIdText}>Wear lightweight clothing</Text>
+                      </View>
+                      <View style={styles.acceptedIdRow}>
+                        <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                        <Text style={styles.acceptedIdText}>Clear and well lit</Text>
+                      </View>
+                      <Text style={styles.notAcceptedLabel}>Don't:</Text>
+                      <View style={styles.acceptedIdRow}>
+                        <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
+                        <Text style={styles.acceptedIdText}>Include other people</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Upload side-on photo dropzone */}
+                {capturedPhotos['selectSide'] ? (
+                  <View style={styles.capturedDropzone}>
+                    <img src={capturedPhotos['selectSide']} style={styles.capturedThumbnail as any} />
+                    <View style={styles.capturedInfo}>
+                      <View style={styles.capturedCheckRow}>
+                        <Image source={require('../theme/icons/check_circle.svg')} style={styles.capturedCheckIcon} resizeMode="contain" />
+                        <Text style={styles.capturedText}>Photo captured</Text>
+                      </View>
+                      <View
+                        style={[styles.retakeButton, hoveredBtn === 'retakeSide' && styles.secondaryButtonHover]}
+                        onMouseEnter={() => setHoveredBtn('retakeSide')}
+                        onMouseLeave={() => setHoveredBtn(null)}
+                        {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
+                      >
+                        <Text style={styles.retakeButtonText}>Retake</Text>
+                      </View>
+                    </View>
+                    {isMobile && (
+                      <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectSide', file); if (e.target) e.target.value = ''; }} />
+                    )}
+                  </View>
+                ) : (
+                  <View style={styles.uploadDropzone}>
+                    <View style={styles.selfieTipBox}>
+                      <View style={styles.selfieTipPill}><Text style={styles.selfieTipLabel}>Tip</Text></View>
+                      <Text style={styles.selfieTipText}>
+                        <Text style={styles.selfieTipBold}>Switch to selfie mode, then set the Timer.</Text>
+                        {'\n'}Place your phone somewhere stable.
+                      </Text>
+                    </View>
+                    <View
+                      style={[styles.secondaryButton, hoveredBtn === 'selectSide' && styles.secondaryButtonHover, pressedBtn === 'selectSide' && styles.secondaryButtonPressed]}
+                      onMouseEnter={() => setHoveredBtn('selectSide')}
+                      onMouseLeave={() => setHoveredBtn(null)}
+                      onMouseDown={() => setPressedBtn('selectSide')}
+                      onMouseUp={() => setPressedBtn(null)}
+                      {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
+                    >
+                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Take side-on photo' : 'Select side-on photo'}</Text>
+                    </View>
+                    {isMobile && (
+                      <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectSide', file); if (e.target) e.target.value = ''; }} />
                     )}
                   </View>
                 )}
@@ -752,160 +847,79 @@ const PhotoCaptureScreen: React.FC = () => {
 
               <View style={styles.uploadDivider} />
 
-              {/* 2. Side-on photo */}
-              <View style={styles.weightSubsection}>
-                <Text style={styles.weightSubsectionTitle}>2. Side-on photo of yourself</Text>
-                <View style={styles.weightContentRow}>
-                  <img
-                    src={require('../images/side-profile-img.jpg')}
-                    style={styles.weightImgTag as any}
-                  />
-                  <View style={styles.acceptedIdList}>
-                    <Text style={styles.acceptedIdLabel}>Do:</Text>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Include full body and face</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Wear lightweight clothing</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Take the photo today</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Clear and well lit</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
+              {/* Weight reading — separate section */}
+              <View style={styles.photoIdSection}>
+                <Text style={styles.photoIdHeading}>Current weight reading</Text>
+                <Text style={styles.photoIdBody}>Standing on your scales, or a photo of an in-store weighing slip.</Text>
 
-              {/* Upload side-on photo dropzone */}
-              {capturedPhotos['selectSide'] ? (
-                <View style={styles.capturedDropzone}>
-                  <img src={capturedPhotos['selectSide']} style={styles.capturedThumbnail as any} />
-                  <View style={styles.capturedInfo}>
-                    <View style={styles.capturedCheckRow}>
-                      <Image source={require('../theme/icons/check_circle.svg')} style={styles.capturedCheckIcon} resizeMode="contain" />
-                      <Text style={styles.capturedText}>Photo captured</Text>
-                    </View>
-                    <View
-                      style={[styles.retakeButton, hoveredBtn === 'retakeSide' && styles.secondaryButtonHover]}
-                      onMouseEnter={() => setHoveredBtn('retakeSide')}
-                      onMouseLeave={() => setHoveredBtn(null)}
-                      {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
-                    >
-                      <Text style={styles.retakeButtonText}>Retake</Text>
-                    </View>
-                  </View>
-                  {isMobile && (
-                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectSide', file); if (e.target) e.target.value = ''; }} />
-                  )}
-                </View>
-              ) : (
-                <View style={styles.uploadDropzone}>
-                  <View
-                    style={[styles.secondaryButton, hoveredBtn === 'selectSide' && styles.secondaryButtonHover, pressedBtn === 'selectSide' && styles.secondaryButtonPressed]}
-                    onMouseEnter={() => setHoveredBtn('selectSide')}
-                    onMouseLeave={() => setHoveredBtn(null)}
-                    onMouseDown={() => setPressedBtn('selectSide')}
-                    onMouseUp={() => setPressedBtn(null)}
-                    {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
-                  >
-                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Capture side-on photo' : 'Select side-on photo'}</Text>
-                  </View>
-                  {isMobile && (
-                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectSide', file); if (e.target) e.target.value = ''; }} />
-                  )}
-                </View>
-              )}
-
-              <View style={styles.uploadDivider} />
-
-              {/* 3. Weight reading photo */}
-              <View style={styles.weightSubsection}>
-                <Text style={styles.weightSubsectionTitle}>3. Photo of your current weight reading</Text>
-                <View style={styles.weightSubcopyWrap}>
-                  <Text style={styles.photoIdBody}>Standing on weighing scale, in-store weighing scales slip or a smart scales app screenshot.</Text>
-                </View>
                 <View style={styles.weightContentRow}>
                   <img
                     src={require('../images/scale-img.jpg')}
                     style={styles.weightImgTag as any}
                   />
                   <View style={styles.acceptedIdList}>
-                    <Text style={styles.acceptedIdLabel}>Do:</Text>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
                       <Text style={styles.acceptedIdText}>Show weight clearly</Text>
                     </View>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Include your toes</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Take the photo today</Text>
+                      <Text style={styles.acceptedIdText}>Both feet on the scales</Text>
                     </View>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
                       <Text style={styles.acceptedIdText}>Clear and well lit</Text>
                     </View>
+                    <Text style={styles.notAcceptedLabel}>Don't:</Text>
+                    <View style={styles.acceptedIdRow}>
+                      <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
+                      <Text style={styles.acceptedIdText}>Cover the display</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
 
-              {/* Upload weight reading photo dropzone */}
-              {capturedPhotos['selectWeight'] ? (
-                <View style={styles.capturedDropzone}>
-                  <img src={capturedPhotos['selectWeight']} style={styles.capturedThumbnail as any} />
-                  <View style={styles.capturedInfo}>
-                    <View style={styles.capturedCheckRow}>
-                      <Image source={require('../theme/icons/check_circle.svg')} style={styles.capturedCheckIcon} resizeMode="contain" />
-                      <Text style={styles.capturedText}>Photo captured</Text>
+                {/* Upload weight reading photo dropzone */}
+                {capturedPhotos['selectWeight'] ? (
+                  <View style={styles.capturedDropzone}>
+                    <img src={capturedPhotos['selectWeight']} style={styles.capturedThumbnail as any} />
+                    <View style={styles.capturedInfo}>
+                      <View style={styles.capturedCheckRow}>
+                        <Image source={require('../theme/icons/check_circle.svg')} style={styles.capturedCheckIcon} resizeMode="contain" />
+                        <Text style={styles.capturedText}>Photo captured</Text>
+                      </View>
+                      <View
+                        style={[styles.retakeButton, hoveredBtn === 'retakeWeight' && styles.secondaryButtonHover]}
+                        onMouseEnter={() => setHoveredBtn('retakeWeight')}
+                        onMouseLeave={() => setHoveredBtn(null)}
+                        {...{ onClick: () => handleUploadButtonPress('selectWeight') } as any}
+                      >
+                        <Text style={styles.retakeButtonText}>Retake</Text>
+                      </View>
                     </View>
+                    {isMobile && (
+                      <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectWeight', file); if (e.target) e.target.value = ''; }} />
+                    )}
+                  </View>
+                ) : (
+                  <View style={styles.uploadDropzone}>
                     <View
-                      style={[styles.retakeButton, hoveredBtn === 'retakeWeight' && styles.secondaryButtonHover]}
-                      onMouseEnter={() => setHoveredBtn('retakeWeight')}
+                      style={[styles.secondaryButton, hoveredBtn === 'selectWeight' && styles.secondaryButtonHover, pressedBtn === 'selectWeight' && styles.secondaryButtonPressed]}
+                      onMouseEnter={() => setHoveredBtn('selectWeight')}
                       onMouseLeave={() => setHoveredBtn(null)}
+                      onMouseDown={() => setPressedBtn('selectWeight')}
+                      onMouseUp={() => setPressedBtn(null)}
                       {...{ onClick: () => handleUploadButtonPress('selectWeight') } as any}
                     >
-                      <Text style={styles.retakeButtonText}>Retake</Text>
+                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Take weight reading photo' : 'Select weight reading photo'}</Text>
                     </View>
+                    {isMobile && (
+                      <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectWeight', file); if (e.target) e.target.value = ''; }} />
+                    )}
                   </View>
-                  {isMobile && (
-                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectWeight', file); if (e.target) e.target.value = ''; }} />
-                  )}
-                </View>
-              ) : (
-                <View style={styles.uploadDropzone}>
-                  <View
-                    style={[styles.secondaryButton, hoveredBtn === 'selectWeight' && styles.secondaryButtonHover, pressedBtn === 'selectWeight' && styles.secondaryButtonPressed]}
-                    onMouseEnter={() => setHoveredBtn('selectWeight')}
-                    onMouseLeave={() => setHoveredBtn(null)}
-                    onMouseDown={() => setPressedBtn('selectWeight')}
-                    onMouseUp={() => setPressedBtn(null)}
-                    {...{ onClick: () => handleUploadButtonPress('selectWeight') } as any}
-                  >
-                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Capture weight reading photo' : 'Select weight reading photo'}</Text>
-                  </View>
-                  {isMobile && (
-                    <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectWeight', file); if (e.target) e.target.value = ''; }} />
-                  )}
-                </View>
-              )}
-
-              <View style={styles.uploadDivider} />
-
-              <View style={styles.warningBanner}>
-                <Text style={styles.warningBannerText}>
-                  Any edited, filtered or AI-generated photos will result in your order being <Text style={styles.warningBannerBold}>rejected</Text> and future requests declined.
-                </Text>
+                )}
               </View>
 
-              <PIPPButton text="Complete upload" onPress={() => setSubmitModalVisible(true)} />
+              <PIPPButton text="Submit photos" onPress={() => setSubmitModalVisible(true)} />
 
               <View style={styles.uploadBottomSpacer} />
             </View>
@@ -930,7 +944,7 @@ const PhotoCaptureScreen: React.FC = () => {
                 <View style={styles.qrCodeSection}>
                   <View style={styles.qrCodeWrapper}>
                     <QRCodeSVG
-                      value={`${window.location.origin}/photo-capture/camera?session=${sessionIdRef.current}`}
+                      value={`${window.location.origin}/photo-capture-2/camera?session=${sessionIdRef.current}`}
                       size={180}
                       level="M"
                       bgColor="#FFFFFF"
@@ -1080,11 +1094,10 @@ const PhotoCaptureScreen: React.FC = () => {
                 {/* Camera guide overlay */}
                 {renderCameraGuide()}
 
-                {/* Top controls + guide instruction */}
+                {/* Change #10: Top controls — close button on RIGHT only, no switch camera in top bar */}
                 <View style={styles.cameraTopBar}>
-                  <View style={styles.cameraTopButton} {...{ onClick: handleCloseCamera } as any}>
-                    <Image source={require('../theme/icons/close.svg')} style={styles.cameraTopIcon} resizeMode="contain" />
-                  </View>
+                  {/* Placeholder on left for spacing */}
+                  <View style={{ width: 44, height: 44 }} />
                   {cameraButtonId && (
                     <View style={styles.cameraTopTextWrap}>
                       <View style={styles.cameraTopTextBg}>
@@ -1097,8 +1110,9 @@ const PhotoCaptureScreen: React.FC = () => {
                       </View>
                     </View>
                   )}
-                  <View style={styles.cameraTopButton} {...{ onClick: () => setCameraFacingMode(prev => prev === 'environment' ? 'user' : 'environment') } as any}>
-                    <Image source={require('../theme/icons/swap.svg')} style={styles.cameraTopIcon} resizeMode="contain" />
+                  {/* Close button on the right */}
+                  <View style={styles.cameraTopButton} {...{ onClick: handleCloseCamera } as any}>
+                    <Image source={require('../theme/icons/close.svg')} style={styles.cameraTopIcon} resizeMode="contain" />
                   </View>
                 </View>
 
@@ -1109,41 +1123,19 @@ const PhotoCaptureScreen: React.FC = () => {
                   </View>
                 )}
 
-                {/* Zoom horizontal slider — above bottom controls */}
-                {zoomPanelOpen && maxZoom > 1 && (
-                  <View style={styles.zoomPanel}>
-                    <Text style={styles.zoomPanelLabel}>1x</Text>
-                    <input
-                      type="range"
-                      min="1"
-                      max={maxZoom}
-                      step="0.1"
-                      value={zoomLevel}
-                      onChange={(e: any) => handleZoomChange(parseFloat(e.target.value))}
-                      style={{
-                        flex: 1,
-                        height: 44,
-                        accentColor: '#1a1a1a',
-                        cursor: 'pointer',
-                      } as any}
-                    />
-                    <Text style={styles.zoomPanelLabel}>{maxZoom.toFixed(0)}x</Text>
-                  </View>
-                )}
-
                 {/* Dismiss backdrop — tap anywhere outside to close menus */}
-                {(timerMenuOpen || zoomPanelOpen) && (
-                  <View style={styles.menuDismissBackdrop} {...{ onClick: () => { setTimerMenuOpen(false); setZoomPanelOpen(false); } } as any} />
+                {timerMenuOpen && (
+                  <View style={styles.menuDismissBackdrop} {...{ onClick: () => { setTimerMenuOpen(false); } } as any} />
                 )}
 
                 {/* Timer popup menu — Apple-style scale animation, centered above timer button */}
                 <div style={{
                   position: 'absolute' as const,
                   bottom: 104,
-                  right: '25%',
+                  left: '25%',
                   zIndex: 15,
                   transformOrigin: 'bottom center',
-                  transform: timerMenuOpen ? 'translateX(50%) scale(1)' : 'translateX(50%) scale(0.01)',
+                  transform: timerMenuOpen ? 'translateX(-50%) scale(1)' : 'translateX(-50%) scale(0.01)',
                   opacity: timerMenuOpen ? 1 : 0,
                   transition: 'transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.18s ease',
                   pointerEvents: timerMenuOpen ? 'auto' as const : 'none' as const,
@@ -1163,36 +1155,47 @@ const PhotoCaptureScreen: React.FC = () => {
                   </View>
                 </div>
 
-                {/* Bottom controls */}
+                {/* Change #13: Simple x1/x2 zoom toggle above capture button */}
+                {maxZoom > 1 && (
+                  <View style={styles.zoomToggleWrap}>
+                    <View
+                      style={styles.zoomTogglePill}
+                      {...{ onClick: () => {
+                        const newZoom = zoomLevel < 2 ? 2 : 1;
+                        handleZoomChange(newZoom);
+                      } } as any}
+                    >
+                      <Text style={styles.zoomToggleText}>{zoomLevel < 2 ? '1x' : '2x'}</Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Bottom controls — Change #11: Timer on LEFT, Change #12: Switch camera on RIGHT */}
                 <View style={styles.cameraBottomBar}>
                   <View style={styles.cameraControlsRow}>
-                    {/* Zoom toggle — left */}
-                    {maxZoom > 1 ? (
-                      <View style={styles.cameraControlCol}>
-                        <View
-                          style={[styles.cameraControlButton, zoomPanelOpen && styles.cameraControlButtonActive]}
-                          {...{ onClick: () => { setZoomPanelOpen(prev => !prev); setTimerMenuOpen(false); } } as any}
-                        >
-                          <Text style={[styles.cameraControlButtonText, zoomPanelOpen && styles.cameraControlButtonTextActive]}>{zoomLevel.toFixed(1)}x</Text>
-                        </View>
-                      </View>
-                    ) : (
-                      <View style={styles.cameraControlCol} />
-                    )}
-
-                    {/* Capture button — center */}
-                    <View style={styles.captureButtonOuter} {...{ onClick: () => { setTimerMenuOpen(false); setZoomPanelOpen(false); handleCapturePress(); } } as any}>
-                      <View style={styles.captureButtonInner} />
-                    </View>
-
-                    {/* Timer toggle — right */}
+                    {/* Timer toggle — left (was right) */}
                     <View style={styles.cameraControlCol}>
                       <View
                         style={[styles.cameraControlButton, timerMenuOpen && styles.cameraControlButtonActive]}
-                        {...{ onClick: () => { setTimerMenuOpen(prev => !prev); setZoomPanelOpen(false); } } as any}
+                        {...{ onClick: () => { setTimerMenuOpen(prev => !prev); } } as any}
                       >
                         <img src={require('../theme/icons/clock.svg')} style={{ width: 18, height: 18, filter: timerMenuOpen ? 'brightness(0)' : 'brightness(0) invert(1)' }} alt="" />
                         {selectedTimer > 0 && <Text style={[styles.cameraControlButtonText, timerMenuOpen && styles.cameraControlButtonTextActive]}>{selectedTimer}s</Text>}
+                      </View>
+                    </View>
+
+                    {/* Capture button — center */}
+                    <View style={styles.captureButtonOuter} {...{ onClick: () => { setTimerMenuOpen(false); handleCapturePress(); } } as any}>
+                      <View style={styles.captureButtonInner} />
+                    </View>
+
+                    {/* Switch camera — right (was in top bar) */}
+                    <View style={styles.cameraControlCol}>
+                      <View
+                        style={styles.cameraControlButton}
+                        {...{ onClick: () => setCameraFacingMode(prev => prev === 'environment' ? 'user' : 'environment') } as any}
+                      >
+                        <Image source={require('../theme/icons/swap.svg')} style={styles.cameraTopIcon} resizeMode="contain" />
                       </View>
                     </View>
                   </View>
@@ -1211,16 +1214,17 @@ const PhotoCaptureScreen: React.FC = () => {
                     objectFit: 'cover' as any,
                   }}
                 />
+                {/* Change #14: "Use photo" is primary (left), "Retake" is secondary (right) */}
                 <View style={styles.reviewBottomBar}>
                   <View style={styles.reviewButtonsRow}>
+                    <View style={styles.reviewUseButtonWrap}>
+                      <PIPPButton text="Use photo" onPress={handleUsePhoto} />
+                    </View>
                     <View
                       style={styles.reviewRetakeButton}
                       {...{ onClick: handleRetake } as any}
                     >
                       <Text style={styles.reviewRetakeText}>Retake</Text>
-                    </View>
-                    <View style={styles.reviewUseButtonWrap}>
-                      <PIPPButton text="Use photo" onPress={handleUsePhoto} />
                     </View>
                   </View>
                 </View>
@@ -1315,7 +1319,7 @@ const PhotoCaptureScreen: React.FC = () => {
               <PIPPButton
                 text="Upload all photos"
                 onPress={() => {
-                  window.history.pushState({}, '', '/photo-capture/before-you-start');
+                  window.history.pushState({}, '', '/photo-capture-2/before-you-start');
                   window.dispatchEvent(new PopStateEvent('popstate'));
                 }}
               />
@@ -2090,6 +2094,16 @@ const styles = StyleSheet.create({
     height: 24,
     tintColor: '#086A74',
   } as any,
+  uploadHeaderTitle: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
+    color: '#07073D',
+  } as any,
+  uploadSubtextBold: {
+    fontWeight: '700',
+  } as any,
   uploadBackPlaceholder: {
     width: 40,
     height: 40,
@@ -2274,15 +2288,17 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#07073D',
   } as any,
+  // Change #5: Reduced left indent — paddingLeft from 24 to 0
   weightContentRow: {
-    paddingLeft: 24,
+    paddingLeft: 0,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 16,
     alignSelf: 'stretch',
   } as any,
+  // Change #5: Reduced left indent — paddingLeft from 20 to 0
   weightSubcopyWrap: {
-    paddingLeft: 20,
+    paddingLeft: 0,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
@@ -2316,6 +2332,109 @@ const styles = StyleSheet.create({
     height: 16,
     tintColor: '#BB292A',
   } as any,
+
+  // Change #3: Accordion styles
+  accordionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'stretch',
+    cursor: 'pointer',
+    paddingVertical: 4,
+  } as any,
+  accordionHeaderText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 22,
+    color: '#086A74',
+  } as any,
+  accordionChevron: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 10,
+    color: '#086A74',
+  } as any,
+
+  // Change #7: Selfie tip box
+  selfieTipBox: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 8,
+    alignSelf: 'stretch',
+  } as any,
+  selfieTipPill: {
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 360,
+    backgroundColor: '#E9EEFA',
+  } as any,
+  selfieTipLabel: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 10,
+    fontWeight: '600',
+    lineHeight: 12,
+    color: '#07073D',
+  } as any,
+  selfieTipText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 22,
+    color: '#07073D',
+    alignSelf: 'stretch',
+  } as any,
+  selfieTipBold: {
+    fontWeight: '700',
+  } as any,
+
+  // Change #9: Support link styles
+  supportLinkWrap: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    paddingVertical: 4,
+  } as any,
+  supportLinkText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 22,
+    color: '#07073D',
+    textAlign: 'center',
+  } as any,
+  supportLinkAnchor: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 22,
+    color: '#086A74',
+    textDecorationLine: 'underline',
+  } as any,
+
+  // Change #13: Zoom toggle pill styles
+  zoomToggleWrap: {
+    position: 'absolute',
+    bottom: 130,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 15,
+  } as any,
+  zoomTogglePill: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    cursor: 'pointer',
+  } as any,
+  zoomToggleText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  } as any,
+
   // QR Code Modal styles
   qrOverlay: {
     position: 'fixed',
@@ -2828,7 +2947,7 @@ const styles = StyleSheet.create({
     tintColor: '#07073D',
   } as any,
 
-  // Dismiss backdrop for timer/zoom menus
+  // Dismiss backdrop for timer menus
   menuDismissBackdrop: {
     position: 'absolute',
     top: 0,
@@ -2868,7 +2987,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   } as any,
 
-  // Zoom panel — horizontal above bottom controls
+  // Zoom panel — kept but unused (replaced by zoom toggle pill)
   zoomPanel: {
     position: 'absolute',
     bottom: 116,
@@ -3084,4 +3203,4 @@ const bysStyles = StyleSheet.create({
   } as any,
 });
 
-export default PhotoCaptureScreen;
+export default PhotoCaptureScreen2;

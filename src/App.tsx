@@ -3,10 +3,12 @@ import { StyleSheet } from 'react-native';
 import QuestionnaireScreen from './screens/QuestionnaireScreen';
 import Concept9Screen from './screens/Concept9Screen';
 import PhotoCaptureScreen from './screens/PhotoCaptureScreen';
+import PhotoCaptureScreen2 from './screens/PhotoCaptureScreen2';
 
 const getRoute = () => {
   const path = window.location.pathname;
   if (path.startsWith('/treatment-selection-2') || path.startsWith('/concept-2')) return 'treatment-selection-2';
+  if (path.startsWith('/photo-capture-2')) return 'photo-capture-2';
   if (path.startsWith('/photo-capture/camera')) return 'photo-capture-camera';
   if (path.startsWith('/photo-capture/upload')) return 'photo-capture-upload';
   if (path.startsWith('/photo-capture/before-you-start')) return 'photo-capture-before-you-start';
@@ -25,6 +27,10 @@ const App = () => {
 
   if (route === 'treatment-selection-2') {
     return <Concept9Screen />;
+  }
+
+  if (route === 'photo-capture-2') {
+    return <PhotoCaptureScreen2 />;
   }
 
   if (route === 'photo-capture' || route === 'photo-capture-upload' || route === 'photo-capture-camera' || route === 'photo-capture-before-you-start') {
