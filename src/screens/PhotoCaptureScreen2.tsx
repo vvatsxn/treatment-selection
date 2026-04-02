@@ -974,7 +974,7 @@ const PhotoCaptureScreen2: React.FC = () => {
                 <View style={styles.qrCodeSection}>
                   <View style={styles.qrCodeWrapper}>
                     <QRCodeSVG
-                      value={`${window.location.origin}/photo-capture-2/camera?session=${sessionIdRef.current}`}
+                      value={`${window.location.origin}/photo-capture-2/upload`}
                       size={180}
                       level="M"
                       bgColor="#FFFFFF"
@@ -984,31 +984,6 @@ const PhotoCaptureScreen2: React.FC = () => {
                   <Text style={styles.qrInstructionText}>
                     Scan this QR code with your phone camera to open the upload page and take your photos directly.
                   </Text>
-                </View>
-
-                <View style={styles.qrDivider} />
-
-                <View style={styles.qrWaitingSection}>
-                  {photoReceived ? (
-                    <>
-                      {capturedPhotos['qrPhoto'] && (
-                        <img src={capturedPhotos['qrPhoto']} style={styles.qrReceivedThumbnail as any} />
-                      )}
-                      <Image source={require('../theme/icons/check_circle.svg')} style={styles.qrReceivedIcon} resizeMode="contain" />
-                      <Text style={styles.qrWaitingText}>Photo received!</Text>
-                      <Text style={styles.qrWaitingSubtext}>
-                        Your photo has been received from your mobile device.
-                      </Text>
-                    </>
-                  ) : (
-                    <>
-                      <ActivityIndicator size="small" color="#086A74" />
-                      <Text style={styles.qrWaitingText}>Waiting for photos...</Text>
-                      <Text style={styles.qrWaitingSubtext}>
-                        Once you{'\u2019'}ve taken your photos on your mobile device, they{'\u2019'}ll appear here automatically.
-                      </Text>
-                    </>
-                  )}
                 </View>
 
                 <PIPPButton text="Cancel" onPress={handleCloseQrModal} variant="secondary" />
