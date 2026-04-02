@@ -1325,16 +1325,8 @@ const PhotoCaptureScreen2: React.FC = () => {
               </View>
               <Text style={styles.uploadHeading}>Upload your supporting photos</Text>
               <Text style={styles.uploadBody}>
-                {'To safely prescribe your treatment, we\u2019ll '}
-                <Text style={styles.uploadBodyBold}>need the following 4 photos to process your request:</Text>
+                To safely prescribe your treatment, we'll need a few quick photos to confirm your details.
               </Text>
-
-              <View style={styles.bulletList}>
-                <Text style={styles.bulletText}>{'\u2022'} Photo ID</Text>
-                <Text style={styles.bulletText}>{'\u2022'} Front-facing photo of yourself</Text>
-                <Text style={styles.bulletText}>{'\u2022'} Side-on photo of yourself</Text>
-                <Text style={styles.bulletText}>{'\u2022'} Photo of your current weight reading</Text>
-              </View>
 
               <View style={styles.infoBox}>
                 <Image
@@ -3204,7 +3196,7 @@ const bysStyles = StyleSheet.create({
   } as any,
   readyList: {
     flexDirection: 'column',
-    gap: 0,
+    gap: 4,
   } as any,
   readyItem: {
     fontFamily: pippTheme.fontFamily.body,
