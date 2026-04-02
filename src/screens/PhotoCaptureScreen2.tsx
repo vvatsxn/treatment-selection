@@ -1186,7 +1186,7 @@ const PhotoCaptureScreen2: React.FC = () => {
                 </div>
 
                 {/* Zoom presets row above capture button */}
-                {maxZoom > 1 && (
+                {maxZoom > 1 && !timerMenuOpen && (
                   <View style={styles.zoomToggleWrap}>
                     <View style={styles.zoomPresetsRow}>
                       {[1, 1.5, 2, 4, 8].filter(z => z <= maxZoom).map(preset => (
