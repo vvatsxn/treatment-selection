@@ -584,15 +584,16 @@ const PhotoCaptureScreen2: React.FC = () => {
                   Your clinician needs <Text style={styles.uploadSubtextBold}>four</Text> photos before they can prescribe.
                 </Text>
                 <View style={styles.uploadSecurityBox}>
-                  <Image
-                    source={require('../theme/icons/verified-user.svg')}
-                    style={styles.uploadSecurityIcon}
-                    resizeMode="contain"
-                  />
                   <View style={styles.uploadSecurityTextGroup}>
-                    <Text style={styles.uploadSecurityTitle}>Your photos are stored securely</Text>
-                    <Text style={styles.uploadSecurityBody}>Seen only by licensed clinicians.</Text>
-                    <Text style={styles.uploadSecurityBody}>Photo ID is deleted after 90 days.</Text>
+                    <View style={styles.uploadSecurityTitleRow}>
+                      <Image
+                        source={require('../theme/icons/verified-user.svg')}
+                        style={styles.uploadSecurityIcon}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.uploadSecurityTitle}>Your photos are stored securely</Text>
+                    </View>
+                    <Text style={styles.uploadSecurityBody}>Seen only by licensed clinicians. Photo ID is deleted after 90 days.</Text>
                   </View>
                 </View>
                 <Text style={styles.supportLinkText}>
@@ -2140,6 +2141,7 @@ const styles = StyleSheet.create({
     color: '#07073D',
   } as any,
   uploadSecurityBox: {
+    display: 'flex',
     padding: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -2148,28 +2150,35 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#E9EEFA',
   } as any,
+  uploadSecurityTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  } as any,
   uploadSecurityIcon: {
     width: 20,
     height: 20,
+    tintColor: '#003D88',
   } as any,
   uploadSecurityTextGroup: {
     flex: 1,
     flexDirection: 'column',
-    gap: 8,
+    gap: 4,
   } as any,
   uploadSecurityTitle: {
     fontFamily: pippTheme.fontFamily.body,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 22,
-    color: '#07073D',
+    color: '#003D88',
   } as any,
   uploadSecurityBody: {
     fontFamily: pippTheme.fontFamily.body,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '400',
-    lineHeight: 20,
-    color: '#07073D',
+    lineHeight: 22,
+    color: '#003D88',
+    paddingLeft: 28,
   } as any,
   uploadSecurityBodyBold: {
     fontWeight: '700',
@@ -2405,17 +2414,17 @@ const styles = StyleSheet.create({
   } as any,
   supportLinkText: {
     fontFamily: pippTheme.fontFamily.body,
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 22,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
     color: '#07073D',
     textAlign: 'center',
   } as any,
   supportLinkAnchor: {
     fontFamily: pippTheme.fontFamily.body,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    lineHeight: 22,
+    lineHeight: 24,
     color: '#086A74',
     textDecorationLine: 'underline',
   } as any,
