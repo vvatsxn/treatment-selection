@@ -33,6 +33,7 @@ const getDeliveryDateRange = () => {
 const PhotoCaptureScreen2: React.FC = () => {
   const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
   const [pressedBtn, setPressedBtn] = useState<string | null>(null);
+  const [showMoreIds, setShowMoreIds] = useState(false);
   const [pathname, setPathname] = useState(window.location.pathname);
 
   React.useEffect(() => {
@@ -92,6 +93,22 @@ const PhotoCaptureScreen2: React.FC = () => {
 
   // Photo ID accordion state (change #3)
   const [photoIdAccordionOpen, setPhotoIdAccordionOpen] = useState(false);
+
+  // Guide overlay fade state
+  const [guideVisible, setGuideVisible] = useState(true);
+
+  React.useEffect(() => {
+    if (!cameraActive || !cameraButtonId) return;
+    // Always visible for photo ID
+    if (cameraButtonId === 'selectPhotoId') {
+      setGuideVisible(true);
+      return;
+    }
+    // Show guide, then fade after 2 seconds
+    setGuideVisible(true);
+    const timer = setTimeout(() => setGuideVisible(false), 2000);
+    return () => clearTimeout(timer);
+  }, [cameraActive, cameraButtonId]);
 
   // Handle file capture from input
   const handleFileCapture = (buttonId: string, file: File) => {
@@ -337,9 +354,14 @@ const PhotoCaptureScreen2: React.FC = () => {
     const guide = guideImages[cameraButtonId];
     if (!guide) return null;
 
+    const shouldFade = cameraButtonId !== 'selectPhotoId';
+    const fadeStyle: React.CSSProperties = shouldFade
+      ? { transition: 'opacity 0.6s ease-out', opacity: guideVisible ? 0.9 : 0 }
+      : {};
+
     return (
       <View style={styles.cameraGuideContainer}>
-        <img src={guide.src} style={guide.style} alt="" />
+        <img src={guide.src} style={{ ...guide.style, ...fadeStyle }} alt="" />
       </View>
     );
   };
@@ -477,6 +499,23 @@ const PhotoCaptureScreen2: React.FC = () => {
                 <Text style={bysStyles.readyHeading}>Get these ready now</Text>
                 <View style={bysStyles.readyList}>
                   <Text style={bysStyles.readyItem}>{'\u2022'}  Your Photo ID</Text>
+                  <View style={bysStyles.acceptedIdSublist}>
+                    <Text style={bysStyles.acceptedIdText}>Accepted photo ID:</Text>
+                    <Text style={bysStyles.acceptedIdText}>{'\u2022'}  Passport</Text>
+                    <Text style={bysStyles.acceptedIdText}>{'\u2022'}  Driving licence</Text>
+                    {showMoreIds && (
+                      <>
+                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  PASS card</Text>
+                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  Biometric Residence Permit (BRP)</Text>
+                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  National ID card</Text>
+                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  HM Armed Forces or Police ID</Text>
+                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  Government issued photocard travel pass</Text>
+                      </>
+                    )}
+                    <TouchableOpacity onPress={() => setShowMoreIds(!showMoreIds)} activeOpacity={0.7}>
+                      <Text style={bysStyles.seeMoreText}>{showMoreIds ? 'See fewer options' : 'See more options'}</Text>
+                    </TouchableOpacity>
+                  </View>
                   <Text style={bysStyles.readyItem}>{'\u2022'}  Your weighing scales</Text>
                   <Text style={bysStyles.readyItem}>{'\u2022'}  Lightweight clothes</Text>
                   <Text style={bysStyles.readyItem}>{'\u2022'}  Evidence of your last prescription</Text>
@@ -599,37 +638,44 @@ const PhotoCaptureScreen2: React.FC = () => {
                     <Text style={styles.acceptedIdLabel}>Accepted photo ID:</Text>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Valid passport</Text>
+                      <Text style={styles.acceptedIdText}>Valid passport (UK or any country)</Text>
                     </View>
                     <View style={styles.acceptedIdRow}>
                       <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Driving licence</Text>
+                      <Text style={styles.acceptedIdText}>Driving licence (UK or EEA, full or provisional)</Text>
                     </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>PASS card</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Biometric Residence Permit (BRP)</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>National ID card</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>HM Armed Forces or Police ID</Text>
-                    </View>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Government issued photocard travel pass</Text>
-                    </View>
-                    <Text style={styles.notAcceptedLabel}>Not accepted:</Text>
-                    <View style={styles.acceptedIdRow}>
-                      <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
-                      <Text style={styles.acceptedIdText}>Work badges or student cards</Text>
-                    </View>
+                    {showMoreIds && (
+                      <>
+                        <View style={styles.acceptedIdRow}>
+                          <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                          <Text style={styles.acceptedIdText}>PASS card</Text>
+                        </View>
+                        <View style={styles.acceptedIdRow}>
+                          <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                          <Text style={styles.acceptedIdText}>Biometric Residence Permit (BRP)</Text>
+                        </View>
+                        <View style={styles.acceptedIdRow}>
+                          <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                          <Text style={styles.acceptedIdText}>National ID card (EEA, Norway, Iceland, Liechtenstein, or Switzerland)</Text>
+                        </View>
+                        <View style={styles.acceptedIdRow}>
+                          <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                          <Text style={styles.acceptedIdText}>HM Armed Forces or Police ID</Text>
+                        </View>
+                        <View style={styles.acceptedIdRow}>
+                          <Image source={require('../theme/icons/check-circle-outline.svg')} style={styles.acceptedIdIcon} resizeMode="contain" />
+                          <Text style={styles.acceptedIdText}>Government issued photocard travel pass</Text>
+                        </View>
+                        <Text style={styles.notAcceptedLabel}>Not accepted:</Text>
+                        <View style={styles.acceptedIdRow}>
+                          <Image source={require('../theme/icons/close.svg')} style={styles.notAcceptedIcon} resizeMode="contain" />
+                          <Text style={styles.acceptedIdText}>Work badges or student cards</Text>
+                        </View>
+                      </>
+                    )}
+                    <TouchableOpacity onPress={() => setShowMoreIds(!showMoreIds)} activeOpacity={0.7}>
+                      <Text style={styles.seeMoreText}>{showMoreIds ? 'See less options' : 'See more options'}</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -666,7 +712,7 @@ const PhotoCaptureScreen2: React.FC = () => {
                     onMouseUp={() => setPressedBtn(null)}
                     {...{ onClick: () => handleUploadButtonPress('selectPhotoId') } as any}
                   >
-                    <Text style={styles.secondaryButtonText}>{isMobile ? 'Take Photo ID' : 'Select Photo ID'}</Text>
+                    <Text style={styles.secondaryButtonText}>Take Photo ID</Text>
                   </View>
                   {isMobile && (
                     <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectPhotoId'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectPhotoId', file); if (e.target) e.target.value = ''; }} />
@@ -753,7 +799,7 @@ const PhotoCaptureScreen2: React.FC = () => {
                       onMouseUp={() => setPressedBtn(null)}
                       {...{ onClick: () => handleUploadButtonPress('selectFront') } as any}
                     >
-                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Take front-facing photo' : 'Select front-facing photo'}</Text>
+                      <Text style={styles.secondaryButtonText}>Take front-facing photo</Text>
                     </View>
                     {isMobile && (
                       <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectFront'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectFront', file); if (e.target) e.target.value = ''; }} />
@@ -836,7 +882,7 @@ const PhotoCaptureScreen2: React.FC = () => {
                       onMouseUp={() => setPressedBtn(null)}
                       {...{ onClick: () => handleUploadButtonPress('selectSide') } as any}
                     >
-                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Take side-on photo' : 'Select side-on photo'}</Text>
+                      <Text style={styles.secondaryButtonText}>Take side-on photo</Text>
                     </View>
                     {isMobile && (
                       <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectSide'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectSide', file); if (e.target) e.target.value = ''; }} />
@@ -910,7 +956,7 @@ const PhotoCaptureScreen2: React.FC = () => {
                       onMouseUp={() => setPressedBtn(null)}
                       {...{ onClick: () => handleUploadButtonPress('selectWeight') } as any}
                     >
-                      <Text style={styles.secondaryButtonText}>{isMobile ? 'Take weight reading photo' : 'Select weight reading photo'}</Text>
+                      <Text style={styles.secondaryButtonText}>Take weight reading photo</Text>
                     </View>
                     {isMobile && (
                       <input type="file" accept="image/*" capture="environment" ref={(el) => { fileInputRefs.current['selectWeight'] = el; }} style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileCapture('selectWeight', file); if (e.target) e.target.value = ''; }} />
@@ -1155,17 +1201,19 @@ const PhotoCaptureScreen2: React.FC = () => {
                   </View>
                 </div>
 
-                {/* Change #13: Simple x1/x2 zoom toggle above capture button */}
+                {/* Zoom presets row above capture button */}
                 {maxZoom > 1 && (
                   <View style={styles.zoomToggleWrap}>
-                    <View
-                      style={styles.zoomTogglePill}
-                      {...{ onClick: () => {
-                        const newZoom = zoomLevel < 2 ? 2 : 1;
-                        handleZoomChange(newZoom);
-                      } } as any}
-                    >
-                      <Text style={styles.zoomToggleText}>{zoomLevel < 2 ? '1x' : '2x'}</Text>
+                    <View style={styles.zoomPresetsRow}>
+                      {[1, 1.5, 2, 4, 8].filter(z => z <= maxZoom).map(preset => (
+                        <View
+                          key={preset}
+                          style={[styles.zoomPresetPill, zoomLevel === preset && styles.zoomPresetPillActive]}
+                          {...{ onClick: () => handleZoomChange(preset) } as any}
+                        >
+                          <Text style={[styles.zoomPresetText, zoomLevel === preset && styles.zoomPresetTextActive]}>{preset}x</Text>
+                        </View>
+                      ))}
                     </View>
                   </View>
                 )}
@@ -2332,6 +2380,15 @@ const styles = StyleSheet.create({
     height: 16,
     tintColor: '#BB292A',
   } as any,
+  seeMoreText: {
+    color: '#086A74',
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 20,
+    textDecorationLine: 'underline',
+    marginTop: 4,
+  } as any,
 
   // Change #3: Accordion styles
   accordionHeader: {
@@ -2421,18 +2478,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 15,
   } as any,
-  zoomTogglePill: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+  zoomPresetsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 24,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+  } as any,
+  zoomPresetPill: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
     cursor: 'pointer',
   } as any,
-  zoomToggleText: {
+  zoomPresetPillActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  } as any,
+  zoomPresetText: {
     fontFamily: pippTheme.fontFamily.body,
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.7)',
+  } as any,
+  zoomPresetTextActive: {
+    color: '#000000',
     fontWeight: '700',
-    color: '#FFFFFF',
   } as any,
 
   // QR Code Modal styles
@@ -3068,7 +3142,7 @@ const bysStyles = StyleSheet.create({
     flex: 1,
     minHeight: '100dvh',
     width: '100%',
-    backgroundImage: 'linear-gradient(180deg, #FFFFFF 0%, #F1F9FF 20%, #E3F3FF 50%, #DEF4F7 80%, #D0EEF2 100%)',
+    backgroundColor: '#FFFFFF',
   } as any,
   outerContainer: {
     flex: 1,
@@ -3102,10 +3176,6 @@ const bysStyles = StyleSheet.create({
     padding: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 360,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.00)',
-    backgroundImage: 'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.40) 100%)',
   } as any,
   iconImage: {
     width: 80,
@@ -3132,15 +3202,14 @@ const bysStyles = StyleSheet.create({
     fontWeight: '700',
   } as any,
   readyCard: {
+    display: 'flex',
     padding: 20,
     flexDirection: 'column',
     alignItems: 'flex-start',
     gap: 24,
     alignSelf: 'stretch',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
-    backgroundImage: 'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.40) 100%)',
+    backgroundColor: '#F9F9F9',
   } as any,
   readyHeading: {
     fontFamily: pippTheme.fontFamily.body,
@@ -3159,6 +3228,26 @@ const bysStyles = StyleSheet.create({
     fontWeight: '400',
     lineHeight: 24,
     color: pippTheme.colors.text.primary,
+  } as any,
+  acceptedIdSublist: {
+    flexDirection: 'column',
+    gap: 4,
+    paddingLeft: 16,
+  } as any,
+  acceptedIdText: {
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: pippTheme.colors.text.primary,
+  } as any,
+  seeMoreText: {
+    color: '#086A74',
+    fontFamily: pippTheme.fontFamily.body,
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 20,
+    textDecorationLine: 'underline',
   } as any,
   linkButton: {
     flexDirection: 'row',
