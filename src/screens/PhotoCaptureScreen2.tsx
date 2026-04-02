@@ -195,7 +195,8 @@ const PhotoCaptureScreen2: React.FC = () => {
         const capabilities = track.getCapabilities?.() as any;
         if (capabilities?.zoom) {
           setMaxZoom(Math.min(capabilities.zoom.max, 10));
-          setZoomLevel(capabilities.zoom.min || 1);
+          setZoomLevel(1);
+          track.applyConstraints({ advanced: [{ zoom: 1 } as any] }).catch(() => {});
         } else {
           setMaxZoom(1);
           setZoomLevel(1);
@@ -499,23 +500,6 @@ const PhotoCaptureScreen2: React.FC = () => {
                 <Text style={bysStyles.readyHeading}>Get these ready now</Text>
                 <View style={bysStyles.readyList}>
                   <Text style={bysStyles.readyItem}>{'\u2022'}  Your Photo ID</Text>
-                  <View style={bysStyles.acceptedIdSublist}>
-                    <Text style={bysStyles.acceptedIdText}>Accepted photo ID:</Text>
-                    <Text style={bysStyles.acceptedIdText}>{'\u2022'}  Passport</Text>
-                    <Text style={bysStyles.acceptedIdText}>{'\u2022'}  Driving licence</Text>
-                    {showMoreIds && (
-                      <>
-                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  PASS card</Text>
-                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  Biometric Residence Permit (BRP)</Text>
-                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  National ID card</Text>
-                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  HM Armed Forces or Police ID</Text>
-                        <Text style={bysStyles.acceptedIdText}>{'\u2022'}  Government issued photocard travel pass</Text>
-                      </>
-                    )}
-                    <TouchableOpacity onPress={() => setShowMoreIds(!showMoreIds)} activeOpacity={0.7}>
-                      <Text style={bysStyles.seeMoreText}>{showMoreIds ? 'See fewer options' : 'See more options'}</Text>
-                    </TouchableOpacity>
-                  </View>
                   <Text style={bysStyles.readyItem}>{'\u2022'}  Your weighing scales</Text>
                   <Text style={bysStyles.readyItem}>{'\u2022'}  Lightweight clothes</Text>
                   <Text style={bysStyles.readyItem}>{'\u2022'}  Evidence of your last prescription</Text>
