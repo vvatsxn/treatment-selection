@@ -3190,7 +3190,7 @@ const bysStyles = StyleSheet.create({
     padding: 20,
     flexDirection: 'column',
     alignItems: 'flex-start',
-    gap: 24,
+    gap: 8,
     alignSelf: 'stretch',
     borderRadius: 8,
     backgroundColor: '#F9F9F9',
@@ -3204,7 +3204,7 @@ const bysStyles = StyleSheet.create({
   } as any,
   readyList: {
     flexDirection: 'column',
-    gap: 12,
+    gap: 0,
   } as any,
   readyItem: {
     fontFamily: pippTheme.fontFamily.body,
