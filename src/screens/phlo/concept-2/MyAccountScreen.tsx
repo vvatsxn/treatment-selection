@@ -965,11 +965,6 @@ const s = StyleSheet.create({
     borderColor: '#E6E7ED',
     overflow: 'hidden' as any,
     marginBottom: 24,
-    shadowColor: '#07073D',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
   },
   cardPast: { opacity: 0.72 },
 
