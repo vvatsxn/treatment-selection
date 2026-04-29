@@ -226,7 +226,7 @@ function getOrderCfg(order: typeof mockOrders[number]): OrderCfg {
         statusLine: 'Our team has requested',
         statusBold: 'More information',
         bullets: [
-          { icon: IC.infoOutline, text: 'Our team has requested more information for your order' },
+          { icon: IC.infoOutline, text: 'Our team requires more information for your order' },
           { icon: IC.clock,       text: 'Responding sooner means faster approval' },
           { icon: IC.lock,        text: 'Your response is secure and confidential' },
         ],
