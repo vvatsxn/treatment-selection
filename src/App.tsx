@@ -51,6 +51,28 @@ const getRoute = () => {
   return 'treatment-selection-1';
 };
 
+// Preload state illustration images so they appear instantly on navigation
+const STATE_IMAGE_URLS: string[] = [
+  require('./images/states/order-placed.png'),
+  require('./images/states/in-review.png'),
+  require('./images/states/awaiting-photo-id.png'),
+  require('./images/states/on-hold.png'),
+  require('./images/states/payment-failed.png'),
+  require('./images/states/information-uploaded.png'),
+  require('./images/states/preparing.png'),
+  require('./images/states/dispatched.png'),
+  require('./images/states/delivered.png'),
+  require('./images/states/rejected.png'),
+  require('./images/states/cancelled.png'),
+].map(src => (typeof src === 'string' ? src : src.default ?? src.uri ?? src));
+
+if (typeof document !== 'undefined') {
+  STATE_IMAGE_URLS.forEach(url => {
+    const img = new Image();
+    img.src = url;
+  });
+}
+
 const App = () => {
   const [route, setRoute] = useState(getRoute());
 
@@ -59,6 +81,18 @@ const App = () => {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // Reset scroll container to top on every route change
+  useEffect(() => {
+    const scroller = document.getElementById('phlo-scroll-body');
+    if (scroller) {
+      // The RNW ScrollView inner scroll div is the first child
+      const inner = scroller.firstElementChild as HTMLElement | null;
+      if (inner) inner.scrollTop = 0;
+      scroller.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+  }, [route]);
 
   // ── Phlo Clinic ───────────────────────────────────────────────────────────
   if (route === 'phlo-getting-started')   return <GettingStartedScreen />;

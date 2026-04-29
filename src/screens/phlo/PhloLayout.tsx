@@ -64,9 +64,6 @@ export function navigate(path: string | number) {
     window.history.pushState({}, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
   }
-  // Reset scroll position on the main scroll container
-  const scroller = document.getElementById('phlo-scroll-body');
-  if (scroller) scroller.scrollTop = 0;
 }
 
 // ─── Phlo Clinic logo (real PNG asset) ───────────────────────────────────────
