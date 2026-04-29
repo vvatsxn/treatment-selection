@@ -41,6 +41,21 @@ export const C = {
   surfaceAccent:  '#E6F4F5',
 };
 
+// ─── CSS injection ───────────────────────────────────────────────────────────
+const _layoutCss = `
+@media (max-width: 700px) {
+  [data-phlonav] { height: 56px !important; padding-left: 16px !important; padding-right: 16px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+  [data-phlologo] { width: 114px !important; height: auto !important; display: block !important; }
+  [data-phlomenuicon] { width: 24px !important; height: 24px !important; }
+  [data-phlobody] { padding-top: 56px !important; }
+}
+`;
+if (typeof document !== 'undefined') {
+  let el = document.getElementById('phlo-layout-css');
+  if (!el) { el = document.createElement('style'); el.id = 'phlo-layout-css'; document.head.appendChild(el); }
+  el.textContent = _layoutCss;
+}
+
 // ─── Navigation helper ────────────────────────────────────────────────────────
 export function navigate(path: string | number) {
   if (typeof path === 'number') {
@@ -53,12 +68,14 @@ export function navigate(path: string | number) {
 
 // ─── Phlo Clinic logo (real PNG asset) ───────────────────────────────────────
 export function PhloClinicLogo() {
+  const src = require('../../images/phlo-clinic-logo-default.png');
+  // Use a plain <img> so we can attach data-phlologo for the mobile CSS resize
   return (
-    <Image
-      source={require('../../images/phlo-clinic-logo-default.png')}
-      style={{ width: 152, height: 32 }}
-      resizeMode="contain"
-      accessibilityLabel="Phlo Clinic"
+    <img
+      src={typeof src === 'string' ? src : src.default ?? src.uri ?? src}
+      alt="Phlo Clinic"
+      data-phlologo="1"
+      style={{ width: 152, height: 32, objectFit: 'contain', display: 'block' }}
     />
   );
 }
@@ -80,7 +97,7 @@ function SideNav({ onClose }: { onClose: () => void }) {
         <ScrollView contentContainerStyle={s.sidePanelInner}>
           {/* Header row: logo + close */}
           <View style={s.sideHeader}>
-            <PhloClinicLogo width={93} />
+            <PhloClinicLogo />
             <TouchableOpacity onPress={onClose} style={s.closeHit}>
               <Image
                 source={require('../../theme/icons/close.svg')}
@@ -121,18 +138,15 @@ function SideNav({ onClose }: { onClose: () => void }) {
 
 // ─── My Account top nav (logo + hamburger) ────────────────────────────────────
 function MyAccountNav({ onMenuClick }: { onMenuClick: () => void }) {
+  const navProps: any = { style: s.accountNav, dataSet: { phlonav: '1' } };
+  const iconProps: any = { source: require('../../theme/icons/notes.svg'), style: s.menuIcon, dataSet: { phlomenuicon: '1' }, accessibilityLabel: 'Open menu' };
   return (
-    <View style={s.accountNav}>
+    <View {...navProps}>
       <TouchableOpacity onPress={() => navigate('/phlo/my-account')}>
-        <PhloClinicLogo width={93} />
+        <PhloClinicLogo />
       </TouchableOpacity>
-      {/* NotesOutlined / hamburger */}
       <TouchableOpacity onPress={onMenuClick} style={s.menuIconHit}>
-        <Image
-          source={require('../../theme/icons/notes.svg')}
-          style={s.menuIcon}
-          accessibilityLabel="Open menu"
-        />
+        <Image {...iconProps} />
       </TouchableOpacity>
     </View>
   );
@@ -171,7 +185,7 @@ export function QuestionnaireNav({
         <View style={s.qNavCentre}>
           {showLogo && (
             <TouchableOpacity onPress={() => navigate('/phlo')}>
-              <PhloClinicLogo width={110} />
+              <PhloClinicLogo />
             </TouchableOpacity>
           )}
           {step && !showLogo && (
@@ -182,7 +196,7 @@ export function QuestionnaireNav({
           )}
           {!showLogo && !step && !title && (
             <TouchableOpacity onPress={() => navigate('/phlo')}>
-              <PhloClinicLogo width={110} />
+              <PhloClinicLogo />
             </TouchableOpacity>
           )}
         </View>
@@ -208,8 +222,11 @@ export function PhloLayout({ children }: { children: React.ReactNode }) {
     <View style={s.screen}>
       <MyAccountNav onMenuClick={() => setMenuOpen(true)} />
       {menuOpen && <SideNav onClose={() => setMenuOpen(false)} />}
-      <ScrollView style={s.body} contentContainerStyle={s.bodyContent}>
-        {children}
+      <ScrollView style={s.body}>
+        {/* @ts-ignore */}
+        <View style={s.bodyContent} dataSet={{ phlobody: '1' } as any}>
+          {children}
+        </View>
       </ScrollView>
     </View>
   );
@@ -362,18 +379,17 @@ const s = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.white,
-    // @ts-ignore
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100vh' as any,
-    overflow: 'hidden' as any,
   },
-  body: { flex: 1, overflow: 'auto' as any },
-  bodyContent: { flexGrow: 1 },
+  body: { flex: 1 },
+  bodyContent: { flexGrow: 1, paddingTop: 72 },
   qBodyContent: { flexGrow: 1, paddingBottom: 120 },
 
   // My Account nav
   accountNav: {
+    position: 'fixed' as any,
+    top: 0,
+    left: 0,
+    right: 0,
     zIndex: 200,
     backgroundColor: C.white,
     flexDirection: 'row',

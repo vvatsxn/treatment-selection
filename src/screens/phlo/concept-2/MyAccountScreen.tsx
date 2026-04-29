@@ -15,6 +15,27 @@ const _css = `
   to   { opacity: 1; transform: translateY(0); }
 }
 [data-c2card] { animation: c2fadein 0.3s ease 0.05s both; }
+
+/* ── Desktop / Mobile layout toggle ── */
+[data-c2desktop] { display: flex !important; }
+[data-c2mobile]  { display: none  !important; }
+
+@media (max-width: 700px) {
+  [data-c2desktop] { display: none !important; }
+  [data-c2mobile]  { display: flex !important; }
+}
+
+
+/* ── Mobile banner: stack vertically ── */
+@media (max-width: 700px) {
+  [data-c2bannerwrap] { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+  [data-c2bannerbtn]  { align-self: stretch !important; justify-content: center !important; }
+}
+
+/* ── Mobile condition cards: full-width stack ── */
+@media (max-width: 700px) {
+  [data-c2condcard] { width: 100% !important; }
+}
 `;
 
 if (typeof document !== 'undefined') {
@@ -506,9 +527,10 @@ export function OrderCard({ order, cardIndex, isPast }: {
       {/* ── Header divider ── */}
       <View style={s.headerDivider} />
 
-      {/* ── Content ── */}
+      {/* ── Content: Desktop ── */}
       {hasSteps && (
-        <View style={s.content}>
+        // @ts-ignore
+        <View style={s.content} dataSet={{ c2desktop: '1' } as any}>
 
           {/* Left: Steps */}
           <View style={s.stepsContainer}>
@@ -593,13 +615,89 @@ export function OrderCard({ order, cardIndex, isPast }: {
         </View>
       )}
 
+      {/* ── Content: Mobile ── */}
+      {hasSteps && (() => {
+        const activeIdx = cfg.steps.findIndex(s => s.status === 'active');
+        const total = cfg.steps.length;
+        // Sliding window of 3 steps centred on active
+        const winStart = Math.max(0, Math.min(activeIdx - 1, total - 3));
+        const visSteps = cfg.steps.slice(winStart, winStart + 3);
+        const activeInWin = activeIdx - winStart; // 0-2
+        const trackPos = visSteps.length > 1 ? activeInWin / (visSteps.length - 1) : 0;
+
+        return (
+          // @ts-ignore
+          <View style={s.mobileContent} dataSet={{ c2mobile: '1' } as any}>
+
+            {/* Illustration + status text + divider + bullets */}
+            <View style={s.mobileStatusRow}>
+              <Image source={cfg.illustration} style={s.mobileIllustration as any} resizeMode="contain" />
+              {/* This centred column lets the divider stretch to natural text/bullet width */}
+              <View style={s.mobileStatusBody}>
+                <View style={s.mobileStatusTexts}>
+                  <Text style={s.mobileStatusLine}>{cfg.statusLine}</Text>
+                  <Text style={s.mobileStatusBold}>{cfg.statusBold}</Text>
+                </View>
+                {cfg.bullets.length > 0 && (
+                  <>
+                    <View style={s.mobileStatusDivider} />
+                    <View style={s.mobileBullets}>
+                      {cfg.bullets.map((b, i) => (
+                        <View key={i} style={s.mobileBulletRow}>
+                          <Image source={b.icon} style={s.mobileBulletIcon as any} />
+                          <Text style={s.mobileBulletText}>{b.text}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+
+            {/* Horizontal 3-step progress bar */}
+            {(({ children }: { children: React.ReactNode }) => children)({
+              children: React.createElement(
+                View,
+                { style: s.mobileProgressWrap },
+                React.createElement(View, { style: s.mobileTrackBg }),
+                React.createElement(View, { style: [s.mobileTrackFill, { width: `${trackPos * 100}%` as any }] }),
+                React.createElement(
+                  View,
+                  { style: s.mobileStepRow },
+                  ...visSteps.map((step, wi) => {
+                    const isActive = step.status === 'active';
+                    const isDone   = step.status === 'done';
+                    return React.createElement(
+                      View,
+                      { key: wi, style: s.mobileStepNode },
+                      React.createElement(
+                        View,
+                        { style: [s.mobileStepDot, isDone ? s.mobileStepDotDone : isActive ? s.mobileStepDotActive : s.mobileStepDotUpcoming] },
+                        isDone && React.createElement(Image, { source: require('../../../theme/icons/check-bold.svg'), style: [s.mobileStepDotIcon, { tintColor: '#989EB5' } as any] }),
+                        isActive && step.dotIcon && React.createElement(Image, { source: step.dotIcon, style: [s.mobileStepDotIcon, { tintColor: '#FFFFFF' } as any] }),
+                      ),
+                      React.createElement(
+                        Text,
+                        { style: [s.mobileStepLabel, isActive ? s.mobileStepLabelActive : !isDone ? s.mobileStepLabelUpcoming : undefined], numberOfLines: 2 },
+                        step.label,
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            })}
+          </View>
+        );
+      })()}
+
       {/* ── Banner ── */}
       {!isPast && cfg.banner && (() => {
         const b = cfg.banner!;
         const t = BANNER_TOKENS[b.variant];
         return (
           <View style={s.footer}>
-            <View style={[s.bannerWrap, { backgroundColor: t.bg }]}>
+            {/* @ts-ignore */}
+            <View style={[s.bannerWrap, { backgroundColor: t.bg }]} dataSet={{ c2bannerwrap: '1' } as any}>
               <View style={s.bannerLeft}>
                 <View style={s.bannerText}>
                   <Text style={s.bannerTitle}>{b.title}</Text>
@@ -607,10 +705,13 @@ export function OrderCard({ order, cardIndex, isPast }: {
                 </View>
               </View>
               {b.ctaLabel && (
+                // @ts-ignore
                 <TouchableOpacity
                   style={s.bannerBtn}
                   activeOpacity={0.85}
                   onPress={() => {}}
+                  // @ts-ignore
+                  dataSet={{ c2bannerbtn: '1' } as any}
                 >
                   <Text style={s.bannerBtnText}>{b.ctaLabel}</Text>
                   {b.ctaIcon && (
@@ -699,6 +800,8 @@ export default function MyAccountScreen() {
                   style={s.conditionCard}
                   onPress={() => navigate(`/phlo/getting-started?condition=${c.id}`)}
                   activeOpacity={0.8}
+                  // @ts-ignore
+                  dataSet={{ c2condcard: '1' } as any}
                 >
                   <View style={s.conditionImgWrap}>
                     <Image source={c.image} style={s.conditionImg as any} resizeMode="cover" />
@@ -1197,6 +1300,146 @@ const s = StyleSheet.create({
     height: 16,
     tintColor: '#07073D',
   } as any,
+
+  // ── Mobile content ────────────────────────────────────────────────────────
+  mobileContent: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    paddingTop: 20,
+    paddingBottom: 16,
+    gap: 0,
+  },
+  mobileStatusRow: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  mobileIllustration: {
+    width: 120,
+    height: 120,
+  },
+  mobileStatusBody: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+    // alignSelf: 'center' keeps this block shrunk to content width
+    // so the divider stretches to match the longest text/bullet line
+    alignSelf: 'center',
+  },
+  mobileStatusTexts: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 0,
+  },
+  mobileStatusDivider: {
+    height: 1,
+    backgroundColor: '#E6E7ED',
+    alignSelf: 'stretch',
+  },
+  mobileStatusLine: {
+    fontFamily: "'Work Sans', sans-serif",
+    fontSize: 18,
+    fontWeight: '400',
+    lineHeight: 26,
+    color: '#000000',
+    textAlign: 'center',
+  },
+  mobileStatusBold: {
+    fontFamily: "'Work Sans', sans-serif",
+    fontSize: 18,
+    fontWeight: '600',
+    lineHeight: 26,
+    color: '#000000',
+    textAlign: 'center',
+  },
+  mobileBullets: {
+    flexDirection: 'column',
+    gap: 6,
+    alignItems: 'center',
+  },
+  mobileBulletRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  mobileBulletIcon: {
+    width: 16,
+    height: 16,
+    tintColor: '#989EB5',
+    flexShrink: 0,
+  } as any,
+  mobileBulletText: {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 13,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: '#575D84',
+  },
+  mobileDivider: {
+    height: 1,
+    backgroundColor: '#E6E7ED',
+    marginHorizontal: 16,
+  },
+  mobileProgressWrap: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 4,
+    position: 'relative',
+  },
+  mobileTrackBg: {
+    position: 'absolute',
+    top: 11, // half dot height (24/2) - half line height (1/2) = 11.5 ≈ 11
+    left: 12,
+    right: 12,
+    height: 2,
+    backgroundColor: '#E6E7ED',
+    borderRadius: 1,
+  },
+  mobileTrackFill: {
+    position: 'absolute',
+    top: 11,
+    left: 12,
+    height: 2,
+    backgroundColor: '#086A74',
+    borderRadius: 1,
+  },
+  mobileStepRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 0,
+  },
+  mobileStepNode: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+  },
+  mobileStepDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    zIndex: 1,
+  },
+  mobileStepDotDone:     { backgroundColor: '#E6E7ED' },
+  mobileStepDotActive:   { backgroundColor: '#086A74' },
+  mobileStepDotUpcoming: { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#E6E7ED' },
+  mobileStepDotIcon: { width: 12, height: 12 } as any,
+  mobileStepLabel: {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 18,
+    color: '#575D84',
+    textAlign: 'center',
+  },
+  mobileStepLabelActive:   { color: '#07073D' },
+  mobileStepLabelUpcoming: { color: '#989EB5' },
 
   // Start a new order
   newOrderTitle: {
