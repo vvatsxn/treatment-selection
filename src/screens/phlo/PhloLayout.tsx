@@ -64,6 +64,9 @@ export function navigate(path: string | number) {
     window.history.pushState({}, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
   }
+  // Reset scroll position on the main scroll container
+  const scroller = document.getElementById('phlo-scroll-body');
+  if (scroller) scroller.scrollTop = 0;
 }
 
 // ─── Phlo Clinic logo (real PNG asset) ───────────────────────────────────────
@@ -222,7 +225,7 @@ export function PhloLayout({ children }: { children: React.ReactNode }) {
     <View style={s.screen}>
       <MyAccountNav onMenuClick={() => setMenuOpen(true)} />
       {menuOpen && <SideNav onClose={() => setMenuOpen(false)} />}
-      <ScrollView style={s.body}>
+      <ScrollView style={s.body} nativeID="phlo-scroll-body">
         {/* @ts-ignore */}
         <View style={s.bodyContent} dataSet={{ phlobody: '1' } as any}>
           {children}
