@@ -215,7 +215,7 @@ function getOrderCfg(order: typeof mockOrders[number]): OrderCfg {
       return {
         steps: base5Steps(1, [
           'Your order has been placed.',
-          'A prescriber has a question for you.',
+          'Our team has requested more information.',
           "We'll prepare your medication once approved",
           'Dispatched by courier',
           `Estimated delivery —`,
@@ -223,21 +223,19 @@ function getOrderCfg(order: typeof mockOrders[number]): OrderCfg {
         badgeLabel: 'Reply needed',
         badgeBg: '#FEF3C7',
         badgeColor: '#D97706',
-        statusLine: 'Your prescriber needs',
+        statusLine: 'Our team has requested',
         statusBold: 'More information',
         bullets: [
-          { icon: IC.infoOutline, text: 'Dr Patel has a question about your order' },
-          { icon: IC.clock,       text: 'Replying sooner means faster approval' },
+          { icon: IC.infoOutline, text: 'Our team has requested more information for your order' },
+          { icon: IC.clock,       text: 'Responding sooner means faster approval' },
           { icon: IC.lock,        text: 'Your response is secure and confidential' },
         ],
         illustration: STATE_IMAGES.awaitingPhotoId,
         banner: {
           variant: 'warning',
           icon: IC.infoOutline,
-          title: 'Your prescriber has a question',
-          body: 'Please reply to keep your order moving through the review process.',
-          ctaLabel: 'See the question',
-          ctaIcon: IC.arrowFwd,
+          title: 'Please check your email',
+          body: 'Our team has been in touch with details of what information is required.',
         },
       };
 
