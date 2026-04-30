@@ -1350,11 +1350,12 @@ const s = StyleSheet.create({
   mobileBullets: {
     flexDirection: 'column',
     gap: 6,
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    alignSelf: 'center',
   },
   mobileBulletRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
   },
   mobileBulletIcon: {
