@@ -3,6 +3,13 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
 // Inject responsive CSS for order card step rows and CTA visibility
 const _ocCSS = `
+  @keyframes ocSlideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  [data-ocbottom] {
+    animation: ocSlideDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+  }
   [data-ocsteps="desktop"] { display: flex !important; }
   [data-ocsteps="mobile"]  { display: none  !important; }
   [data-ocfill="desktop"]  { display: block !important; }
@@ -421,7 +428,8 @@ export function OrderCard({ order }: { order: typeof mockOrders[number] }) {
       </View>
 
       {/* ── Bottom info panel — hidden for no-action states ── */}
-      {cfg.variant !== 'none' && <View style={[s.ocBottom, { backgroundColor: tok.bottomBg, borderColor: tok.bottomBorder }]}>
+      {cfg.variant !== 'none' && <View style={s.ocBottomClip}>
+      <View style={[s.ocBottom, { backgroundColor: tok.bottomBg, borderColor: tok.bottomBorder }]} dataSet={{ ocbottom: '1' } as any}>
 
         {/* Icon + text row — on desktop includes inline CTA */}
         <View style={s.ocCalloutRow}>
@@ -480,7 +488,7 @@ export function OrderCard({ order }: { order: typeof mockOrders[number] }) {
           </TouchableOpacity>
         )}
 
-      </View>}
+      </View></View>}
     </TouchableOpacity>
   );
 }
@@ -739,6 +747,12 @@ const s = StyleSheet.create({
   },
 
   // Bottom info panel — overlaps top panel by 12px
+  ocBottomClip: {
+    overflow: 'hidden' as any,
+    // Extra top padding gives the animation room to slide from; negative margin pulls it up behind the card
+    marginTop: -12,
+    paddingTop: 12,
+  },
   ocBottom: {
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
@@ -753,9 +767,6 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
     alignSelf: 'stretch' as any,
-    marginTop: -12,
-    // @ts-ignore
-    zIndex: 0,
   },
 
   ocCalloutRow: {
