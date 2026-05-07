@@ -749,9 +749,8 @@ const s = StyleSheet.create({
   // Bottom info panel — overlaps top panel by 12px
   ocBottomClip: {
     overflow: 'hidden' as any,
-    // Extra top padding gives the animation room to slide from; negative margin pulls it up behind the card
-    marginTop: -12,
-    paddingTop: 12,
+    marginTop: -24,   // pull wrapper up so its top edge is above the card bottom
+    paddingTop: 24,   // push inner content back down — net visual effect is 0, but gives clip room
   },
   ocBottom: {
     borderBottomLeftRadius: 12,
@@ -767,6 +766,7 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
     alignSelf: 'stretch' as any,
+    marginTop: -12,   // overlap the card by 12px
   },
 
   ocCalloutRow: {
