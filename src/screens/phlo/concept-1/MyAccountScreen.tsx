@@ -8,7 +8,7 @@ const _ocCSS = `
     to   { transform: translateY(0);    opacity: 1; }
   }
   [data-ocbottom] {
-    animation: ocSlideDown 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+    animation: ocSlideDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
   }
   [data-ocsteps="desktop"] { display: flex !important; }
   [data-ocsteps="mobile"]  { display: none  !important; }
